@@ -13,7 +13,7 @@ Chess Bot is a C#-based chess engine capable of playing chess against a human or
 - [Testing Guide](#testing-guide)
 - [Modifying the Codebase](#modifying-the-codebase)
 - [License](#license)
-- [Credits](#credits)
+- [Contact Information](#contact-information)
 
 # Overview
 
