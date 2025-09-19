@@ -11,7 +11,7 @@ class Menu {
     private int margin = 20;
 
     public Menu() {
-        string[] buttonTexts = { "Play as White", "Play as Black", "AI vs AI" };
+        string[] buttonTexts = { "Play as White", "Play as Black", "AI vs AI", "Exit" };
 
         int posX = (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - width / 2;
         int posY = Settings.ScreenHeight / 2 + 4 * Settings.SquareSideLength - height;
@@ -43,7 +43,7 @@ class Menu {
             button.UpdateHover(mousePos);
 
             if (button.WasClicked()) {
-                clicked = 2 - i;
+                clicked = buttons.Count - (i + 1);
             }
         }
 

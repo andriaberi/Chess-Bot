@@ -189,6 +189,9 @@ class Game {
                 blackPlayer = new App.BotPlayer(false);
                 Settings.FromWhitesView = true;
                 break;
+            case 3:
+                Environment.Exit(0);
+                break;
         }
 
         // Reset game state
