@@ -90,11 +90,7 @@ It’s fast, accurate, and easy to expand.
 
 # License
 
-This project is open source and licensed under the **GNU Affero General Public License (AGPL)**.
-
-You are free to use, modify, and distribute this software for personal or commercial purposes, provided that any distributed versions also comply with the AGPL terms, including making source code available.
-
-**No warranty is provided. Use at your own risk.**
+This project is licensed under the MIT License. See `LICENSE`.
 
 # Contact Information
 
