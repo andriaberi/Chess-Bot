@@ -11,7 +11,7 @@ class OpeningBook {
     private List<List<Move>> book = new List<List<Move>>();
 
     public OpeningBook() {
-        using (FileStream fs = File.OpenRead("Chess/Resources/Openings/Books.bin"))
+        using (FileStream fs = File.OpenRead("Resources/Openings/Books.bin"))
         using (BinaryReader br = new BinaryReader(fs)) {
             int openingCount = br.ReadInt32();
             for (int i = 0; i < openingCount; i++) {

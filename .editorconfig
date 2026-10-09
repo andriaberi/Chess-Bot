@@ -16,3 +16,11 @@ csharp_new_line_before_finally = false
 csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_between_query_expression_clauses = true
+
+# Space after a cast: (int) 'c', not (int)'c'
+csharp_space_after_cast = true
+
+# Spaces around binary operators: 5 - 3, not 5-3
+csharp_space_around_binary_operators = before_and_after
+
+# Note: there is no setting for named arguments; dotnet format always writes `pawns: false`

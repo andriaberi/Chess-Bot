@@ -57,8 +57,8 @@ class Game {
         gameStatus = new Status("");
         buttons = new Menu();
 
-        if (!File.Exists("Chess/Resources/Openings/Books.bin")) {
-            OpeningBook.GenerateBinaryOpeningBook("Chess/Resources/Openings/Books.txt", "Chess/Resources/Openings/Books.bin");
+        if (!File.Exists("Resources/Openings/Books.bin")) {
+            OpeningBook.GenerateBinaryOpeningBook("Resources/Openings/Books.txt", "Resources/Openings/Books.bin");
         }
         openingBook = new OpeningBook();
 

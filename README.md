@@ -2,7 +2,7 @@
 
 Chess Bot is a C#-based chess engine capable of playing chess against a human or another engine. It features move generation, evaluation, and an iterative deepening alpha-beta search with transposition tables and time management for real-time play.
 
-![alt text](<Chess/Resources/Media/Demo.png>)
+![alt text](<Resources/Media/Demo.png>)
 
 # Table of Contents
 
@@ -83,8 +83,6 @@ Run `make` on its own to see every command:
 | `make test` | Run the tests |
 | `make check` | Build everything and test (what CI runs) |
 | `make format` | Fix whitespace to match `.editorconfig` |
-| `make version` | Print the current version |
-| `make bump` | Bump the version (`TO=patch\|minor\|major\|1.2.3`) |
 
 Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 
@@ -102,10 +100,10 @@ Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 
 # Modifying the Codebase
 
-* To change the bot’s behavior, navigate to the `Chess/Scripts/Bot` folder.
-* To work on move generation logic, go to `Chess/Scripts/Framework/Chess/Move Generation`.
-* To modify the user interface, access `Chess/Scripts/Framework/App/UI`.
-* For theme and general settings, check out `Chess/Scripts/Utilities`.
+* To change the bot’s behavior, navigate to the `Scripts/Bot` folder.
+* To work on move generation logic, go to `Scripts/Framework/Chess/Move Generation`.
+* To modify the user interface, access `Scripts/Framework/App/UI`.
+* For theme and general settings, check out `Scripts/Utilities`.
 
 # License
 
