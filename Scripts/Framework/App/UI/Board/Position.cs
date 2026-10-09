@@ -30,7 +30,7 @@ class Position {
 
     public void Update(ChessEngine.Board board, Board boardUI, bool highlightMoves, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
         Move move = Move.NullMove;
-        
+
         if (Raylib.IsMouseButtonPressed(MouseButton.Left)) {
             int x = Raylib.GetMouseX();
             int y = Raylib.GetMouseY();
@@ -39,7 +39,7 @@ class Position {
                 // If mouse is not hovering on a piece, ignore it
                 Rectangle rect = new Rectangle(piece.X, piece.Y, Settings.SquareSideLength, Settings.SquareSideLength);
                 if (!Raylib.CheckCollisionPointRec(new Vector2(x, y), rect)) continue;
-                    
+
                 draggedPiece = pieces.IndexOf(piece); // Drag the piece
 
                 // If the piece is of the current player, highlight its valid moves
@@ -65,7 +65,7 @@ class Position {
                 // If the mouse is not hovering on a square, ignore it
                 Rectangle rect = new Rectangle(UIHelper.GetScreenX(i % 8), UIHelper.GetScreenY(i / 8), Settings.SquareSideLength, Settings.SquareSideLength);
                 if (!Raylib.CheckCollisionPointRec(new Vector2(Raylib.GetMouseX(), Raylib.GetMouseY()), rect)) continue;
-                
+
                 // If the piece is not dragged or the square is not a valid move, ignore
                 if (draggedPiece == -1 || !boardUI.IsValidToMove(i)) continue;
 
@@ -82,7 +82,7 @@ class Position {
 
                 pieces[draggedPiece].Coord = new Coord(i);
                 pieces[draggedPiece].ResetPosition();
-                
+
                 placedOnValidSquare = true;
             }
 
@@ -105,11 +105,11 @@ class Position {
                 int index = pieces.FindIndex(p => p.Coord.SquareIndex == rookSource);
                 pieces[index].Coord = new Coord(rookTarget);
                 pieces[index].ResetPosition();
-            } 
+            }
             // Promotion
             if (board.Square[move.Source].IsPawn && (move.Target < 8 || move.Target > 55)) {
                 move = new Move(move.Source, move.Target, Move.QueenPromotion);
-                
+
                 int index = pieces.FindIndex(p => p.Coord.SquareIndex == move.Target);
                 pieces[index] = new Piece(new API.Piece(API.Piece.Queen, board.IsWhiteTurn ? API.Piece.White : API.Piece.Black), new Coord(move.Target));
             }
@@ -121,10 +121,10 @@ class Position {
                 int index = pieces.FindIndex(p => p.Coord.SquareIndex == target);
 
                 pieces.RemoveAt(index);
-            } 
-            
+            }
+
             PlaySound(move, board);
-            board.MakeMove(move, record : true);
+            board.MakeMove(move, record: true);
             if (board.IsWhiteTurn) {
                 whiteTimerUI.Start();
                 blackTimerUI.Stop();
@@ -191,9 +191,9 @@ class Position {
         // Move piece by a small amount each frame, and wait for a short time
         // Creates an animation effect
         for (int i = 0; i < frames; i++) {
-            pieces[index].X = (int)(startX + dx * i);
-            pieces[index].Y = (int)(startY + dy * i);
-            
+            pieces[index].X = (int) (startX + dx * i);
+            pieces[index].Y = (int) (startY + dy * i);
+
             Thread.Sleep(10);
         }
         animatedPiece = -1;
@@ -201,12 +201,11 @@ class Position {
 
     private void PlaySound(Move move, ChessEngine.Board board) {
         bool soundPlayed = false;
-        
+
         board.MakeMove(move);
-        if (Arbiter.Status(board) != "") { soundPlayed = true; SoundManager.Play("Game-Over"); }
-        else if (ChessEngine.MoveHelper.IsInCheck(board, true) || ChessEngine.MoveHelper.IsInCheck(board, false)) { soundPlayed = true; SoundManager.Play("Check"); }
+        if (Arbiter.Status(board) != "") { soundPlayed = true; SoundManager.Play("Game-Over"); } else if (ChessEngine.MoveHelper.IsInCheck(board, true) || ChessEngine.MoveHelper.IsInCheck(board, false)) { soundPlayed = true; SoundManager.Play("Check"); }
         board.UnmakeMove(move);
-        
+
         if (soundPlayed) return;
 
         if (board.Square[move.Target].Type != API.Piece.None) SoundManager.Play("Capture");
@@ -224,7 +223,7 @@ class Position {
         Move move = board.MovesMade[board.MovesMade.Count - 1];
         int color = board.IsWhiteTurn ? API.Piece.Black : API.Piece.White;
         int index = pieces.FindIndex(piece => piece.Coord == new Coord(move.Target));
-        
+
         if (index == -1) return;
         promotionLastChecked = board.MovesMade.Count;
 
@@ -235,7 +234,7 @@ class Position {
         foreach (Piece piece in pieces) {
             piece.Render();
         }
-        
+
         if (draggedPiece != -1) pieces[draggedPiece].Render();
         if (animatedPiece != -1) pieces[animatedPiece].Render();
     }

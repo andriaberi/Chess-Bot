@@ -7,7 +7,7 @@ static class Magic {
     public static Bitboard[] BishopMask;
 
     public static readonly Bitboard[][] RookAttacks;
-	public static readonly Bitboard[][] BishopAttacks;
+    public static readonly Bitboard[][] BishopAttacks;
 
     public static Bitboard GetSliderAttacks(int square, Bitboard blockers, bool ortho) {
         return ortho ? GetRookAttacks(square, blockers) : GetBishopAttacks(square, blockers);
@@ -37,7 +37,7 @@ static class Magic {
         BishopAttacks = new Bitboard[64][];
 
         // Create the attack tables for each square
-        for (int i = 0; i < 64; i++){
+        for (int i = 0; i < 64; i++) {
             RookAttacks[i] = CreateTable(i, true, new Bitboard(MagicNumbers.RookMagics[i]), MagicNumbers.RookShifts[i]);
             BishopAttacks[i] = CreateTable(i, false, new Bitboard(MagicNumbers.BishopMagics[i]), MagicNumbers.BishopShifts[i]);
         }

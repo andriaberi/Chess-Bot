@@ -73,7 +73,7 @@ class OpeningBook {
 
             bool match = true;
             for (int i = 0; i < movesMade.Count; i++) {
-                if (!moves[i].Equals(movesMade[i])) { 
+                if (!moves[i].Equals(movesMade[i])) {
                     // Position was not matched
                     match = false;
                     break;

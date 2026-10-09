@@ -17,7 +17,7 @@ class Coords {
     public void Render() {
         rowNames = Settings.FromWhitesView ? "87654321" : "12345678";
         colNames = Settings.FromWhitesView ? "ABCDEFGH" : "HGFEDCBA";
-        
+
         for (int i = 0; i < 8; i++) {
             // Find the i-th square in the bottommost row from the rendering perspective and get its screen coordinates
             Coord coord = new Coord(Settings.FromWhitesView ? -1 : 8, Settings.FromWhitesView ? i + 1 : 6 - i);

@@ -49,7 +49,7 @@ class MoveUtility {
 
         // Promotion
         bool isPromoting = false;
-        Piece promotingTo = new Piece(Piece.None); 
+        Piece promotingTo = new Piece(Piece.None);
 
         if (move.Flag == Move.QueenPromotion) {
             isPromoting = true;
@@ -87,7 +87,7 @@ class MoveUtility {
             board.Color[board.IsWhiteTurn].SetBit(rookTarget);
 
             // Update square array
-            board.Square[rookTarget] = board.Square[rookSource]; 
+            board.Square[rookTarget] = board.Square[rookSource];
             board.Square[rookSource] = new Piece(Piece.None);
         }
 
@@ -125,7 +125,7 @@ class MoveUtility {
                 board.CastlingRights &= 0b1110;
             } else if (move.Source == 63) {
                 board.CastlingRights &= 0b1101;
-            } 
+            }
         }
 
         if (targetPiece.Type == Piece.Rook) {
@@ -137,7 +137,7 @@ class MoveUtility {
                 board.CastlingRights &= 0b1110;
             } else if (move.Target == 63) {
                 board.CastlingRights &= 0b1101;
-            } 
+            }
         }
     }
 

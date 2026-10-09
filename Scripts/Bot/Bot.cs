@@ -34,7 +34,7 @@ class Bot {
 
         // Starts a background thread that cancels the search after time limit
         var timerThread = new Thread(() => {
-            Thread.Sleep((int)(timeLimitSeconds * 1000));
+            Thread.Sleep((int) (timeLimitSeconds * 1000));
             searchCancelled = true;
         }) {
             IsBackground = true

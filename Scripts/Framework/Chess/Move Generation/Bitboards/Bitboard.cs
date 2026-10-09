@@ -12,8 +12,8 @@ class Bitboard {
 
     // For example 1236 is 10011010100 in binary 
     // The result of the function will be 2, because rightmost bit that is 1 is at index 2
-    public int FirstBit => (int) Math.Log2(Value & (ulong) - (long) Value);
-    
+    public int FirstBit => (int) Math.Log2(Value & (ulong) -(long) Value);
+
     public bool IsEmpty => this == Null;
     public bool Contains(int index) => (Value & (1UL << index)) != 0;
 
@@ -25,14 +25,14 @@ class Bitboard {
     public static Bitboard operator >>(Bitboard a, int shift) => new Bitboard(a.Value >> shift);
     public static Bitboard operator *(Bitboard a, Bitboard b) => new Bitboard(a.Value * b.Value);
 
-    public static Bitboard operator +(Bitboard a, Bitboard b) => new Bitboard(a.Value + b.Value);  
+    public static Bitboard operator +(Bitboard a, Bitboard b) => new Bitboard(a.Value + b.Value);
     public static Bitboard operator -(Bitboard a, Bitboard b) => new Bitboard(a.Value - b.Value);
 
     public static bool operator ==(Bitboard a, Bitboard b) => a.Value == b.Value;
     public static bool operator !=(Bitboard a, Bitboard b) => a.Value != b.Value;
     public override bool Equals(object? obj) => base.Equals(obj);
     public override int GetHashCode() => base.GetHashCode();
-    
+
     public static Bitboard Null => new Bitboard(0);
 
     // Reverses bitboard

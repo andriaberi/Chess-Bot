@@ -27,8 +27,8 @@ class Player {
         x = UIHelper.GetScreenX(Settings.FromWhitesView ? 0 : 7);
         if (Settings.FromWhitesView) y = spaceBetween + Settings.SquareSideLength * 8 + Settings.BorderSize * 2 + offset;
         else y = spaceBetween - offset - fontSize;
-        
-        Raylib.DrawTextEx(font, $"White: { whitePlayer }", new Vector2(x, y), fontSize, 1, fontColor);
+
+        Raylib.DrawTextEx(font, $"White: {whitePlayer}", new Vector2(x, y), fontSize, 1, fontColor);
     }
 
     private void RenderBlack() {
@@ -40,7 +40,7 @@ class Player {
         if (Settings.FromWhitesView) y = spaceBetween - offset + 5 - fontSize;
         else y = spaceBetween + Settings.SquareSideLength * 8 + Settings.BorderSize * 2 + offset;
 
-        Raylib.DrawTextEx(font, $"Black: { blackPlayer }", new Vector2(x, y), fontSize, 1, fontColor);
+        Raylib.DrawTextEx(font, $"Black: {blackPlayer}", new Vector2(x, y), fontSize, 1, fontColor);
     }
 
     public void Render() {

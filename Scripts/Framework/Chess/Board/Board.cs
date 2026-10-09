@@ -39,13 +39,13 @@ class Board {
     public Board(string fen) {
         FenUtility.LoadFen(fen, this);
         MovesMade = new List<Move>(); // Clearing the list of moves after resetting the game
-        
+
         ZobristKey = ZobristHashing.CalculateZobristKey(this);
         PastZobristKeys = new List<ulong> { ZobristKey }; // Initialize with the current key
     }
 
     public void SwitchTurn() => IsWhiteTurn = !IsWhiteTurn;
-    
+
     public void MakeMove(Move move, bool record = false) {
         MoveUtility.MakeMove(this, move);
         SwitchTurn();

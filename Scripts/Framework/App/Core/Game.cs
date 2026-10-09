@@ -88,7 +88,7 @@ class Game {
             goto Handle;
         }
 
-        Update:
+    Update:
 
         currentPlayer = chessBoard.IsWhiteTurn ? whitePlayer : blackPlayer;
         if (currentPlayer.IsBot && statusCheck) {
@@ -98,7 +98,7 @@ class Game {
             BotTask = Task.Run(() => GetBotMove(token), token);
         }
 
-        Handle:
+    Handle:
 
         if (gameOver) {
             whiteTimer.Stop();

@@ -25,7 +25,7 @@ class MoveGenerator {
         ];
 
         // If specific square is provided, filter moves to only include moves from that square
-        if (squareIndex != null)  moves = moves.Where(move => move.Source == squareIndex).ToList();
+        if (squareIndex != null) moves = moves.Where(move => move.Source == squareIndex).ToList();
 
         return moves;
     }
@@ -84,7 +84,7 @@ class MoveGenerator {
         moves.AddRange(MoveHelper.ExtractPawnMoves(leftCapture, board.IsWhiteTurn ? 7 : -7, pins: pins));
         moves.AddRange(MoveHelper.ExtractPawnMoves(regularPromotion, board.IsWhiteTurn ? 8 : -8, promotion: true, pins: pins));
         moves.AddRange(MoveHelper.ExtractPawnMoves(rightCapturePromotion, board.IsWhiteTurn ? 9 : -9, promotion: true, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(leftCapturePromotion, board.IsWhiteTurn ? 7 : -7, promotion: true, pins: pins));    
+        moves.AddRange(MoveHelper.ExtractPawnMoves(leftCapturePromotion, board.IsWhiteTurn ? 7 : -7, promotion: true, pins: pins));
 
         moves.AddRange(EnPassantMoves(board, board.IsWhiteTurn ? Piece.White : Piece.Black));
 
@@ -167,7 +167,7 @@ class MoveGenerator {
         // Get all the unsafe squares for the king
         board.Type[Piece.King].ClearBit(index);
         board.Color[board.IsWhiteTurn].ClearBit(index);
-        
+
         moveSet &= ~MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn);
 
         board.Type[Piece.King].SetBit(index);
@@ -231,7 +231,7 @@ class MoveGenerator {
         } else {
             right = (pawns >> 9) & ~Masks.Column[7] & enPassantSquare;
             left = (pawns >> 7) & ~Masks.Column[0] & enPassantSquare;
-        } 
+        }
 
         moves.AddRange(MoveHelper.ExtractPawnMoves(right, board.IsWhiteTurn ? 9 : -9, enPassant: true, board: board));
         moves.AddRange(MoveHelper.ExtractPawnMoves(left, board.IsWhiteTurn ? 7 : -7, enPassant: true, board: board));
@@ -260,7 +260,7 @@ class MoveGenerator {
         Bitboard bishops = board.Type[Piece.Bishop] & board.Color[!board.IsWhiteTurn];
         Bitboard rooks = board.Type[Piece.Rook] & board.Color[!board.IsWhiteTurn];
         Bitboard queens = board.Type[Piece.Queen] & board.Color[!board.IsWhiteTurn];
-        
+
         // Pawns 
         if (board.IsWhiteTurn) {
             if (!((BitboardHelper.GetBitAt(kingIndex) << 7) & pawns & ~Masks.Column[7]).IsEmpty) {
@@ -366,7 +366,7 @@ class MoveGenerator {
 
                 if (!(straightAttack & straightMoves & board.Color[board.IsWhiteTurn]).IsEmpty && (straightAttack & BitboardHelper.GetBitAt(kingIndex)).IsEmpty) {
                     int pinnedPieceIndex = (straightAttack & straightMoves & board.Color[board.IsWhiteTurn]).FirstBit;
-                    
+
                     pins.Add(pinnedPieceIndex, (straightAttack | straightMoves | BitboardHelper.GetBitAt(index)) & (MoveHelper.StraightMoves(board, pinnedPieceIndex) | BitboardHelper.GetBitAt(pinnedPieceIndex)));
                 }
             }

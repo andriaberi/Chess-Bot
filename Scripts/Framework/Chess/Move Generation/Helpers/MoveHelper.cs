@@ -14,18 +14,18 @@ class MoveHelper {
     // - 'occupied & mask' gives the occupied squares in the rook's row.
     // - Subtracting '2 * rook' from this masked row shifts bits, creating a solid block of 1s from the rook to the left.
     // - Finally, '& mask' ensures that only bits within the current row are preserved.
-    
+
     // Step 3: Repeat the process for the rook's column.
     public static Bitboard StraightMoves(Board board, int index) {
         Bitboard occupied = (Masks.Row[BoardHelper.RowIndex(index)] | Masks.Column[BoardHelper.ColumnIndex(index)]) & board.Occupied ^ BitboardHelper.GetBitAt(index);
-    
+
         return Magic.GetSliderAttacks(index, occupied, true);
     }
 
     // Same as the StraightMoves method, but we're now calculating the diagonal moves.
     public static Bitboard DiagonalMoves(Board board, int index) {
         Bitboard occupied = (Masks.Diagonal[BoardHelper.DiagonalIndex(index)] | Masks.AntiDiagonal[BoardHelper.AntiDiagonalIndex(index)]) & board.Occupied ^ BitboardHelper.GetBitAt(index);
-    
+
         return Magic.GetSliderAttacks(index, occupied, false);
     }
 
@@ -49,7 +49,7 @@ class MoveHelper {
         Bitboard knights = board.Type[Piece.Knight] & board.Color[!color];
         while (!knights.IsEmpty) {
             int index = knights.FirstBit;
-        
+
             result |= Masks.KnightAttacks[index];
 
             knights.ClearBit(index);
@@ -112,7 +112,7 @@ class MoveHelper {
                 }
             }
 
-            if (promotion){
+            if (promotion) {
                 moves.Add(new Move(index - dir, index, Move.QueenPromotion));
                 moves.Add(new Move(index - dir, index, Move.BishopPromotion));
                 moves.Add(new Move(index - dir, index, Move.KnightPromotion));
@@ -125,12 +125,11 @@ class MoveHelper {
                     moves.Add(move);
                 }
                 board.UnmakeMove(move);
-            }
-            else {
+            } else {
                 moves.Add(new Move(index - dir, index));
             }
 
-            bitboard.ClearBit(index); 
+            bitboard.ClearBit(index);
         }
 
         return moves;
@@ -141,14 +140,14 @@ class MoveHelper {
     public static List<Move> ExtractMoves(Bitboard bitboard, int index) {
         List<Move> moves = new List<Move>(bitboard.Count());
         ulong value = bitboard.Value;
-        
+
         while (value != 0) {
-            ulong isolated = value & (ulong)-(long)value;
+            ulong isolated = value & (ulong) -(long) value;
             int target = (int) Math.Log2(isolated);
             moves.Add(new Move(index, target));
             value ^= isolated;
         }
-        
+
         return moves;
     }
 }

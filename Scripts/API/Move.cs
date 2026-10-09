@@ -49,17 +49,17 @@ class Move {
         _ => Piece.None
     };
 
-    public static Move NullMove => new Move(0, 0, 0);  
+    public static Move NullMove => new Move(0, 0, 0);
 
     public static bool operator ==(Move a, Move b) => a.value == b.value;
     public static bool operator !=(Move a, Move b) => a.value != b.value;
     public override int GetHashCode() => value;
-    public override bool Equals(object ? obj) {
+    public override bool Equals(object? obj) {
         if (obj == null || GetType() != obj.GetType()) {
             return false;
         }
 
         Move move = (Move) obj;
         return value == move.value;
-    }  
+    }
 }

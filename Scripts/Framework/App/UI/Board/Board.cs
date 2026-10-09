@@ -20,7 +20,7 @@ class Board {
         for (int i = 0; i < 64; i++) {
             squares[i] = new Square(new Coord(i));
         }
-        
+
         lastMove = Move.NullMove; // When the game is started, there is no last move
         Clear();
     }

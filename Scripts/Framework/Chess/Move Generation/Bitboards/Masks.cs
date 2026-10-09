@@ -64,8 +64,8 @@ class Masks {
         new Bitboard(0x4080000000000000),
         new Bitboard(0x8000000000000000)
 
-    };  
-    
+    };
+
     public static Bitboard[] KnightAttacks = new Bitboard[64];
     public static Bitboard[] KingAttacks = new Bitboard[64];
 
@@ -75,9 +75,9 @@ class Masks {
             Bitboard attacks = new Bitboard(0);
             int x = i % 8;
             int y = i / 8;
-            
+
             // Knight moves
-            foreach (var (dx, dy) in new[] { (1,2), (2,1), (-1,2), (-2,1), (1,-2), (2,-1), (-1,-2), (-2,-1) }) {
+            foreach (var (dx, dy) in new[] { (1, 2), (2, 1), (-1, 2), (-2, 1), (1, -2), (2, -1), (-1, -2), (-2, -1) }) {
                 int nx = x + dx;
                 int ny = y + dy;
                 if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
