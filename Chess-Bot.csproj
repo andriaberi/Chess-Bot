@@ -8,10 +8,16 @@
     <Nullable>enable</Nullable>
     <!-- Run on newer .NET runtimes too when .NET 8 isn't installed -->
     <RollForward>Major</RollForward>
+    <!-- The test project lives under this folder, so keep its files out of the app build -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);Tests/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Raylib-cs" Version="6.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tests" />
   </ItemGroup>
 
 </Project>
