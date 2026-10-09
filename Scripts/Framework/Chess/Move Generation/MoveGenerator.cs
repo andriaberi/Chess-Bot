@@ -5,7 +5,10 @@ using Chess.API;
 class MoveGenerator {
     private static Bitboard attackRays = new Bitboard(0xFFFFFFFFFFFFFFFF);
     private static List<int> attackerIndexes = new List<int>();
-    private static Dictionary<int, Bitboard> pins = new Dictionary<int, Bitboard>();
+
+    // Pin masks indexed by square; a square's bit is set in pinnedPieces when the piece on it is pinned
+    private static Bitboard[] pins = new Bitboard[64];
+    private static Bitboard pinnedPieces = Bitboard.Null;
 
     public static List<Move> GenerateMoves(Board board, int? squareIndex = null) {
         GenerateAttackRays(board);
@@ -16,28 +19,27 @@ class MoveGenerator {
             attackRays = Bitboard.Null;
         }
 
-        // Generates all possible moves for the current player
-        List<Move> moves = [
-            .. PawnMoves(board),
-            .. KnightMoves(board),
-            .. SlidingPieceMoves(board),
-            .. KingMoves(board)
-        ];
+        // Generates all possible moves for the current player into a single list
+        List<Move> moves = new List<Move>(64);
+        PawnMoves(board, moves);
+        KnightMoves(board, moves);
+        SlidingPieceMoves(board, moves);
+        KingMoves(board, moves);
 
         // If specific square is provided, filter moves to only include moves from that square
-        if (squareIndex != null) moves = moves.Where(move => move.Source == squareIndex).ToList();
+        if (squareIndex != null) moves.RemoveAll(move => move.Source != squareIndex);
 
         return moves;
     }
 
     public static List<Move> GenerateCaptureMoves(Board board) {
         List<Move> moves = GenerateMoves(board);
+        moves.RemoveAll(move => board.Square[move.Target].Type == Piece.None);
 
-        return moves.Where(move => board.Square[move.Target].Type != Piece.None).ToList();
+        return moves;
     }
 
-    public static List<Move> PawnMoves(Board board) {
-        List<Move> moves = new List<Move>();
+    public static void PawnMoves(Board board, List<Move> moves) {
 
         Bitboard pawns = board.Type[Piece.Pawn] & board.Color[board.IsWhiteTurn];
         Bitboard empty = board.Empty;
@@ -78,21 +80,19 @@ class MoveGenerator {
 
         // Extract moves from bitboards
         // Check rightmost bit, add it to the list, and then clear it
-        moves.AddRange(MoveHelper.ExtractPawnMoves(singlePush, board.IsWhiteTurn ? 8 : -8, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(doublePush, board.IsWhiteTurn ? 16 : -16, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(rightCapture, board.IsWhiteTurn ? 9 : -9, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(leftCapture, board.IsWhiteTurn ? 7 : -7, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(regularPromotion, board.IsWhiteTurn ? 8 : -8, promotion: true, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(rightCapturePromotion, board.IsWhiteTurn ? 9 : -9, promotion: true, pins: pins));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(leftCapturePromotion, board.IsWhiteTurn ? 7 : -7, promotion: true, pins: pins));
+        MoveHelper.ExtractPawnMoves(moves, singlePush, board.IsWhiteTurn ? 8 : -8, pins: pins, pinnedPieces: pinnedPieces);
+        MoveHelper.ExtractPawnMoves(moves, doublePush, board.IsWhiteTurn ? 16 : -16, pins: pins, pinnedPieces: pinnedPieces);
+        MoveHelper.ExtractPawnMoves(moves, rightCapture, board.IsWhiteTurn ? 9 : -9, pins: pins, pinnedPieces: pinnedPieces);
+        MoveHelper.ExtractPawnMoves(moves, leftCapture, board.IsWhiteTurn ? 7 : -7, pins: pins, pinnedPieces: pinnedPieces);
+        MoveHelper.ExtractPawnMoves(moves, regularPromotion, board.IsWhiteTurn ? 8 : -8, promotion: true, pins: pins, pinnedPieces: pinnedPieces);
+        MoveHelper.ExtractPawnMoves(moves, rightCapturePromotion, board.IsWhiteTurn ? 9 : -9, promotion: true, pins: pins, pinnedPieces: pinnedPieces);
+        MoveHelper.ExtractPawnMoves(moves, leftCapturePromotion, board.IsWhiteTurn ? 7 : -7, promotion: true, pins: pins, pinnedPieces: pinnedPieces);
 
-        moves.AddRange(EnPassantMoves(board, board.IsWhiteTurn ? Piece.White : Piece.Black));
+        EnPassantMoves(board, moves);
 
-        return moves;
     }
 
-    public static List<Move> KnightMoves(Board board) {
-        List<Move> moves = new List<Move>();
+    public static void KnightMoves(Board board, List<Move> moves) {
 
         Bitboard knights = board.Type[Piece.Knight] & board.Color[board.IsWhiteTurn];
 
@@ -102,20 +102,18 @@ class MoveGenerator {
             Bitboard moveSet = Masks.KnightAttacks[index];
             moveSet &= board.Empty | board.Color[!board.IsWhiteTurn]; // Remove all the moves that go to the squares occupied by the same color pieces to avoid same color capturing
             moveSet &= attackRays;
-            if (pins.ContainsKey(index)) moveSet &= pins[index];
+            if (pinnedPieces.Contains(index)) moveSet &= pins[index];
 
-            moves.AddRange(MoveHelper.ExtractMoves(moveSet, index));
+            MoveHelper.ExtractMoves(moves, moveSet, index);
 
             knights.ClearBit(index);
         }
 
-        return moves;
     }
 
     // Sliding pieces include rooks, bishops, and queens
     // They can move in any direction until they hit a piece or the edge of the board
-    public static List<Move> SlidingPieceMoves(Board board) {
-        List<Move> moves = new List<Move>();
+    public static void SlidingPieceMoves(Board board, List<Move> moves) {
 
         // Get all the rooks and queens for the horizontal and vertical moves
         Bitboard straight = (board.Type[Piece.Rook] | board.Type[Piece.Queen]) & board.Color[board.IsWhiteTurn];
@@ -129,9 +127,9 @@ class MoveGenerator {
             Bitboard result = MoveHelper.StraightMoves(board, index);
             result &= board.Color[!board.IsWhiteTurn] | board.Empty; // Result above still considers friendly pieces as capturable, so we need to remove them
             result &= attackRays;
-            if (pins.ContainsKey(index)) result &= pins[index];
+            if (pinnedPieces.Contains(index)) result &= pins[index];
 
-            moves.AddRange(MoveHelper.ExtractMoves(result, index));
+            MoveHelper.ExtractMoves(moves, result, index);
 
             straight.ClearBit(index);
         }
@@ -143,18 +141,16 @@ class MoveGenerator {
             Bitboard result = MoveHelper.DiagonalMoves(board, index);
             result &= board.Color[!board.IsWhiteTurn] | board.Empty;
             result &= attackRays;
-            if (pins.ContainsKey(index)) result &= pins[index];
+            if (pinnedPieces.Contains(index)) result &= pins[index];
 
-            moves.AddRange(MoveHelper.ExtractMoves(result, index));
+            MoveHelper.ExtractMoves(moves, result, index);
 
             diagonal.ClearBit(index);
         }
 
-        return moves;
     }
 
-    public static List<Move> KingMoves(Board board) {
-        List<Move> moves = new List<Move>();
+    public static void KingMoves(Board board, List<Move> moves) {
 
         Bitboard kings = board.Type[Piece.King] & board.Color[board.IsWhiteTurn];
 
@@ -173,20 +169,18 @@ class MoveGenerator {
         board.Type[Piece.King].SetBit(index);
         board.Color[board.IsWhiteTurn].SetBit(index);
 
-        moves.AddRange(MoveHelper.ExtractMoves(moveSet, index));
-        moves.AddRange(CastlingMoves(board, index));
+        MoveHelper.ExtractMoves(moves, moveSet, index);
+        CastlingMoves(board, index, moves);
 
         kings.ClearBit(index);
 
-        return moves;
     }
 
-    public static List<Move> CastlingMoves(Board board, int kingIndex) {
-        List<Move> moves = new List<Move>();
+    public static void CastlingMoves(Board board, int kingIndex, List<Move> moves) {
         Bitboard unsafeBitboard = MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn);
 
         // If king is in check, player can't castle
-        if ((unsafeBitboard & BitboardHelper.GetBitAt(kingIndex)) != Bitboard.Null) return moves;
+        if ((unsafeBitboard & BitboardHelper.GetBitAt(kingIndex)) != Bitboard.Null) return;
         if (board.IsWhiteTurn) {
             if ((board.CastlingRights & 0b1000) != 0) {
                 // White king side castling
@@ -215,11 +209,9 @@ class MoveGenerator {
             }
         }
 
-        return moves;
     }
 
-    public static List<Move> EnPassantMoves(Board board, int type) {
-        List<Move> moves = new List<Move>();
+    public static void EnPassantMoves(Board board, List<Move> moves) {
 
         Bitboard enPassantSquare = MoveHelper.GetEnPassant(board);
         Bitboard left, right;
@@ -233,10 +225,9 @@ class MoveGenerator {
             left = (pawns >> 7) & ~Masks.Column[0] & enPassantSquare;
         }
 
-        moves.AddRange(MoveHelper.ExtractPawnMoves(right, board.IsWhiteTurn ? 9 : -9, enPassant: true, board: board));
-        moves.AddRange(MoveHelper.ExtractPawnMoves(left, board.IsWhiteTurn ? 7 : -7, enPassant: true, board: board));
+        MoveHelper.ExtractPawnMoves(moves, right, board.IsWhiteTurn ? 9 : -9, enPassant: true, board: board);
+        MoveHelper.ExtractPawnMoves(moves, left, board.IsWhiteTurn ? 7 : -7, enPassant: true, board: board);
 
-        return moves;
     }
 
     // Generate attack rays for the current player
@@ -337,9 +328,9 @@ class MoveGenerator {
     //     - Check if king rays intersect with any of the enemy sliding pieces and king is not in check
     //         - If the above condition is met, the piece is pinned
     //     - Generate the pin mask for the pinned piece
-    //     - Add the pinned piece to the pins dictionary to access it later
+    //     - Record the pinned piece and its pin mask to access it later
     public static void GetPinnedPieces(Board board) {
-        pins.Clear();
+        pinnedPieces = Bitboard.Null;
 
         int kingIndex = (board.Type[Piece.King] & board.Color[board.IsWhiteTurn]).FirstBit;
 
@@ -357,7 +348,7 @@ class MoveGenerator {
         // Step 2: Check if king rays intersect with any of the enemy sliding pieces and king is not in check
         //         If the above condition is met, the piece is pinned
         // Step 4: Generate the pin mask for the pinned piece
-        // Step 5: Add the pinned piece to the pins dictionary to access it later
+        // Step 5: Record the pinned piece and its pin mask to access it later
         while (!straightAttackers.IsEmpty) {
             int index = straightAttackers.FirstBit;
 
@@ -367,7 +358,8 @@ class MoveGenerator {
                 if (!(straightAttack & straightMoves & board.Color[board.IsWhiteTurn]).IsEmpty && (straightAttack & BitboardHelper.GetBitAt(kingIndex)).IsEmpty) {
                     int pinnedPieceIndex = (straightAttack & straightMoves & board.Color[board.IsWhiteTurn]).FirstBit;
 
-                    pins.Add(pinnedPieceIndex, (straightAttack | straightMoves | BitboardHelper.GetBitAt(index)) & (MoveHelper.StraightMoves(board, pinnedPieceIndex) | BitboardHelper.GetBitAt(pinnedPieceIndex)));
+                    pins[pinnedPieceIndex] = (straightAttack | straightMoves | BitboardHelper.GetBitAt(index)) & (MoveHelper.StraightMoves(board, pinnedPieceIndex) | BitboardHelper.GetBitAt(pinnedPieceIndex));
+                    pinnedPieces.SetBit(pinnedPieceIndex);
                 }
             }
 
@@ -383,7 +375,8 @@ class MoveGenerator {
                 if (!(diagonalAttack & diagonalMoves & board.Color[board.IsWhiteTurn]).IsEmpty && (diagonalAttack & BitboardHelper.GetBitAt(kingIndex)).IsEmpty) {
                     int pinnedPieceIndex = (diagonalAttack & diagonalMoves & board.Color[board.IsWhiteTurn]).FirstBit;
 
-                    pins.Add(pinnedPieceIndex, (diagonalAttack | diagonalMoves | BitboardHelper.GetBitAt(index)) & (MoveHelper.DiagonalMoves(board, pinnedPieceIndex) | BitboardHelper.GetBitAt(pinnedPieceIndex)));
+                    pins[pinnedPieceIndex] = (diagonalAttack | diagonalMoves | BitboardHelper.GetBitAt(index)) & (MoveHelper.DiagonalMoves(board, pinnedPieceIndex) | BitboardHelper.GetBitAt(pinnedPieceIndex));
+                    pinnedPieces.SetBit(pinnedPieceIndex);
                 }
             }
 

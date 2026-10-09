@@ -10,15 +10,20 @@ class ZobristHashing {
         ulong key = 0;
         if (!board.IsWhiteTurn) key ^= blackToMoveKey; // XOR with the key for black to move
         for (int i = 0; i < 64; i++) {
-            Piece piece = board.Square[i];
-            if (!piece.IsNone) {
-                int color = piece.Color;
-                int pieceIndex = (color / 8 - 1) * 6 + (piece.Type - 1); // 0-11 for 12 pieces
-                key ^= ZobristTable[i, pieceIndex];
-            }
+            key ^= PieceKey(board.Square[i], i);
         }
         return key;
     }
+
+    // Key for a single piece on a single square (0 for an empty square)
+    // XOR-ing it in and out lets the board update its key incrementally
+    public static ulong PieceKey(Piece piece, int square) {
+        if (piece.IsNone) return 0;
+        int pieceIndex = (piece.Color / 8 - 1) * 6 + (piece.Type - 1); // 0-11 for 12 pieces
+        return ZobristTable[square, pieceIndex];
+    }
+
+    public static ulong BlackToMoveKey => blackToMoveKey;
 
     private static readonly ulong[,] ZobristTable = new ulong[64, 12]; // 64 squares, 12 piece types (6 colors * 2 types)
     private static readonly ulong blackToMoveKey = 0x1UL; // Unique key for black to move
