@@ -6,6 +6,8 @@
     <RootNamespace>Chess_Bot</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- Run on newer .NET runtimes too when .NET 8 isn't installed -->
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>
