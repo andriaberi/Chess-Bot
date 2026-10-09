@@ -97,28 +97,22 @@ class MoveHelper {
 
     // Extract all moves for pawns
     // All pawns moves are generated all together, so considering pins and en passant is tricky
-    public static List<Move> ExtractPawnMoves(Bitboard bitboard, int dir, bool promotion = false, bool enPassant = false, Dictionary<int, Bitboard>? pins = null, Board? board = null) {
-        List<Move> moves = new List<Move>();
+    public static void ExtractPawnMoves(List<Move> moves, Bitboard bitboard, int dir, bool promotion = false, bool enPassant = false, Bitboard[]? pins = null, Bitboard pinnedPieces = default, Board? board = null) {
         while (!bitboard.IsEmpty) {
             int index = bitboard.FirstBit;
             int source = index - dir;
+            bitboard.ClearBit(index);
 
-            if (pins != null && pins.ContainsKey(source)) {
-                Bitboard pin = pins[source];
-
-                if ((pin & BitboardHelper.GetBitAt(index)).IsEmpty) {
-                    bitboard.ClearBit(index);
-                    continue;
-                }
-            }
+            // A pinned pawn may only move along its pin
+            if (pins != null && pinnedPieces.Contains(source) && !pins[source].Contains(index)) continue;
 
             if (promotion) {
-                moves.Add(new Move(index - dir, index, Move.QueenPromotion));
-                moves.Add(new Move(index - dir, index, Move.BishopPromotion));
-                moves.Add(new Move(index - dir, index, Move.KnightPromotion));
-                moves.Add(new Move(index - dir, index, Move.RookPromotion));
+                moves.Add(new Move(source, index, Move.QueenPromotion));
+                moves.Add(new Move(source, index, Move.BishopPromotion));
+                moves.Add(new Move(source, index, Move.KnightPromotion));
+                moves.Add(new Move(source, index, Move.RookPromotion));
             } else if (enPassant && board != null) {
-                Move move = new Move(index - dir, index, Move.EnPassant);
+                Move move = new Move(source, index, Move.EnPassant);
 
                 board.MakeMove(move);
                 if (!IsInCheck(board, !board.IsWhiteTurn)) {
@@ -126,28 +120,18 @@ class MoveHelper {
                 }
                 board.UnmakeMove(move);
             } else {
-                moves.Add(new Move(index - dir, index));
+                moves.Add(new Move(source, index));
             }
-
-            bitboard.ClearBit(index);
         }
-
-        return moves;
     }
 
     // Extract all moves for any other piece
     // All other pieces moves are generated one by one, so considering pins are not necessary
-    public static List<Move> ExtractMoves(Bitboard bitboard, int index) {
-        List<Move> moves = new List<Move>(bitboard.Count());
-        ulong value = bitboard.Value;
-
-        while (value != 0) {
-            ulong isolated = value & (ulong) -(long) value;
-            int target = (int) Math.Log2(isolated);
+    public static void ExtractMoves(List<Move> moves, Bitboard bitboard, int index) {
+        while (!bitboard.IsEmpty) {
+            int target = bitboard.FirstBit;
             moves.Add(new Move(index, target));
-            value ^= isolated;
+            bitboard.ClearBit(target);
         }
-
-        return moves;
     }
 }
