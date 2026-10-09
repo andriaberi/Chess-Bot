@@ -48,7 +48,7 @@ It’s fast, accurate, and easy to expand.
 # Setup Instructions
 
 1. **Make Sure .NET SDK is Installed**  
-   - You need **.NET 6.0 or higher**  
+   - You need **.NET 8.0 or higher**  
    - Download it from: [https://dotnet.microsoft.com/download](https://dotnet.microsoft.com/download)  
    - After installing, verify the installation with:  
      ```bash
@@ -61,15 +61,32 @@ It’s fast, accurate, and easy to expand.
    cd Chess-Bot
    ```
 
-3. **Run the Bot (Console Demo)**
+3. **Run the Bot**
    ```bash
-   dotnet run
+   make run
    ```
 
-4. **Optional: Run the Move Generation Tests**
+4. **Optional: Run the Tests**
    ```bash
-   dotnet run test
+   make test
    ```
+
+Run `make` on its own to see every command:
+
+| Command | What it does |
+|---|---|
+| `make install` | Restore NuGet packages |
+| `make build` | Build the app and tests (Release; `CONFIG=Debug` to change) |
+| `make run` | Build and play the game |
+| `make publish` | Package a self-contained build into `dist/` (`RID=linux-x64\|win-x64\|osx-x64\|osx-arm64`, or pick from a menu) |
+| `make clean` | Remove build artifacts |
+| `make test` | Run the tests |
+| `make check` | Build everything and test (what CI runs) |
+| `make format` | Fix whitespace to match `.editorconfig` |
+| `make version` | Print the current version |
+| `make bump` | Bump the version (`TO=patch\|minor\|major\|1.2.3`) |
+
+Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 
 # Testing Guide
 
@@ -79,7 +96,9 @@ It’s fast, accurate, and easy to expand.
 * Monitor the timer to see the remaining time for each side.
 * The game status (win/draw) will be displayed on the left once the game ends.
 * Use the three buttons at the bottom-left corner to switch game modes: Play as White, Play as Black, or AI vs AI.
-* To verify move generation correctness, run the tests with the command: `dotnet run test`
+* To verify the engine, run the unit tests: `make test`
+  * Tests live in the `Tests` folder and cover move generation (perft), the board, game rules, and the bot.
+  * Every push and pull request runs the full suite on GitHub Actions.
 
 # Modifying the Codebase
 
