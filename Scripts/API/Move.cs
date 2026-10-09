@@ -2,11 +2,12 @@ using Chess.ChessEngine;
 
 namespace Chess.API;
 
-class Move {
+// A struct, so generating moves doesn't allocate
+readonly struct Move {
     // Move is hashed into a 16-bit integer
     // Structure is following: FFFFTTTTTTSSSSSS
     // F - move flag, T - target square, S - source square
-    private ushort value;
+    private readonly ushort value;
 
     // Flags
     public const ushort NoFlag = 0b0000;
@@ -49,7 +50,7 @@ class Move {
         _ => Piece.None
     };
 
-    public static Move NullMove => new Move(0, 0, 0);
+    public static readonly Move NullMove = new Move(0, 0, 0);
 
     public static bool operator ==(Move a, Move b) => a.value == b.value;
     public static bool operator !=(Move a, Move b) => a.value != b.value;

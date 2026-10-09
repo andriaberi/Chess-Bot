@@ -1,10 +1,10 @@
 namespace Chess.API;
 
-class Piece {
+readonly struct Piece {
     // Piece is hashed into a 5 5 bit integer
     // Structure is following: CCTTT
     // C - color, T - type
-    private int value;
+    private readonly int value;
 
     public const int None = 0;
     public const int Pawn = 1;

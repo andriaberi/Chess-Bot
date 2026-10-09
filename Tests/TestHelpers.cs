@@ -26,9 +26,9 @@ static class TestHelpers {
 
     // Finds the legal move written as "e2e4" / "e7e8q", fails the test if there is none
     public static Move FindMove(Board board, string uci) {
-        Move? match = MoveGenerator.GenerateMoves(board).FirstOrDefault(move => Uci(move) == uci);
-        Assert.True(match is not null, $"{uci} is not a legal move in this position");
-        return match!;
+        Move match = MoveGenerator.GenerateMoves(board).FirstOrDefault(move => Uci(move) == uci, Move.NullMove);
+        Assert.False(match.IsNull, $"{uci} is not a legal move in this position");
+        return match;
     }
 
     public static void Play(Board board, params string[] moves) {
