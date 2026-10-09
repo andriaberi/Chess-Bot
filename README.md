@@ -83,8 +83,6 @@ Run `make` on its own to see every command:
 | `make test` | Run the tests |
 | `make check` | Build everything and test (what CI runs) |
 | `make format` | Fix whitespace to match `.editorconfig` |
-| `make version` | Print the current version |
-| `make bump` | Bump the version (`TO=patch\|minor\|major\|1.2.3`) |
 
 Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 

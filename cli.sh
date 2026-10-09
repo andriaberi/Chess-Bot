@@ -8,7 +8,6 @@ SOLUTION=Chess-Bot.sln
 PROJECT=Chess-Bot.csproj
 CONFIG=${CONFIG:-Release}
 DIST_DIR=${DIST_DIR:-dist}
-VERSION_FILE=$PROJECT
 RUNTIMES=(linux-x64 win-x64 osx-x64 osx-arm64)
 
 # Style
@@ -158,10 +157,6 @@ ${B}Test${R}
   ${A}check${R}     Build everything and test           
   ${A}format${R}    Fix whitespace to match .editorconfig
 
-${B}Project${R}
-  ${A}version${R}   Print the current version
-  ${A}bump${R}      Bump the version                    
-
 ${D}Without RID, publish opens a picker.${R}
 EOF
 }
@@ -229,7 +224,7 @@ cmd_publish() {
 		fi
 	fi
 
-	local out=$DIST_DIR/chess-bot-$(current_version)-$rid
+	local out=$DIST_DIR/chess-bot-$rid
 	rm -rf "$out"
 	step "Publishing $rid" "Published $rid $DIM→ $out/$RESET" \
 		dotnet publish "$PROJECT" -c Release -r "$rid" --self-contained -nologo -o "$out" || exit 1
@@ -245,34 +240,7 @@ cmd_clean() {
 	ok "Removed bin/, obj/, Tests/bin/, Tests/obj/ and $DIST_DIR/"
 }
 
-# The <Version> in Chess-Bot.csproj.
-current_version() { sed -n 's/^ *<Version>\([^<]*\)<\/Version>.*/\1/p' "$VERSION_FILE" | head -1; }
-
-cmd_version() { current_version; }
-
-cmd_bump() {
-	local to=${1:-patch} old new major minor patch
-	old=$(current_version)
-	if [[ ! $old =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-		fail "No X.Y.Z <Version> in $VERSION_FILE"; exit 1
-	fi
-	IFS=. read -r major minor patch <<<"$old"
-	case $to in
-		major) new="$((major + 1)).0.0" ;;
-		minor) new="$major.$((minor + 1)).0" ;;
-		patch) new="$major.$minor.$((patch + 1))" ;;
-		*)
-			if [[ ! $to =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-				fail "TO must be patch, minor, major or X.Y.Z, got '$to'"; exit 1
-			fi
-			new=$to ;;
-	esac
-	sed "s/<Version>$old<\/Version>/<Version>$new<\/Version>/" "$VERSION_FILE" >"$VERSION_FILE.tmp" \
-		&& mv "$VERSION_FILE.tmp" "$VERSION_FILE"
-	ok "Bumped version $DIM$old → $new$RESET"
-}
-
 case ${1:-help} in
-	help|install|build|run|publish|clean|test|check|format|version|bump) cmd=$1; shift; "cmd_$cmd" "$@" ;;
+	help|install|build|run|publish|clean|test|check|format) cmd=$1; shift; "cmd_$cmd" "$@" ;;
 	*) fail "Unknown command '$1'"; printf '\n' >&2; cmd_help >&2; exit 1 ;;
 esac
