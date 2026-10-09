@@ -37,11 +37,26 @@ class Board {
     public void SwitchTurn() => IsWhiteTurn = !IsWhiteTurn;
 
     public void MakeMove(Move move, bool record = false) {
+        // Update the Zobrist key incrementally: XOR out the pieces that leave their squares, XOR in the ones that arrive
+        ulong key = ZobristKey ^ ZobristHashing.BlackToMoveKey;
+        int captureSquare = move.IsEnPassant ? (IsWhiteTurn ? move.Target - 8 : move.Target + 8) : move.Target;
+
+        key ^= ZobristHashing.PieceKey(Square[move.Source], move.Source);
+        key ^= ZobristHashing.PieceKey(Square[captureSquare], captureSquare);
+
+        if (move.IsCastling) {
+            int rookSource = move.Target + (move.Target == 62 || move.Target == 6 ? 1 : -2);
+            int rookTarget = move.Target + (move.Target == 62 || move.Target == 6 ? -1 : 1);
+            key ^= ZobristHashing.PieceKey(Square[rookSource], rookSource) ^ ZobristHashing.PieceKey(Square[rookSource], rookTarget);
+        }
+
         MoveUtility.MakeMove(this, move);
         SwitchTurn();
         if (IsWhiteTurn) MoveCount++;
 
-        ZobristKey = ZobristHashing.CalculateZobristKey(this);
+        key ^= ZobristHashing.PieceKey(Square[move.Target], move.Target); // Handles promotions too
+        ZobristKey = key;
+        System.Diagnostics.Debug.Assert(ZobristKey == ZobristHashing.CalculateZobristKey(this));
         PastZobristKeys.Add(ZobristKey);
 
         if (record) MovesMade.Add(move);
@@ -53,7 +68,7 @@ class Board {
         MoveUtility.UnmakeMove(this, move);
 
         PastZobristKeys.RemoveAt(PastZobristKeys.Count - 1);
-        ZobristKey = ZobristHashing.CalculateZobristKey(this);
+        ZobristKey = PastZobristKeys[^1]; // The previous position's key is already in the history
     }
 
     public int CountZobristKeys(ulong zobristKey) {
