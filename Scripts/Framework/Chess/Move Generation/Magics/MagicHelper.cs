@@ -31,7 +31,7 @@ static class MagicHelper {
 
     public static Bitboard CreateMovementMask(int squareIndex, bool ortho) {
         Bitboard mask = Bitboard.Null;
-        Coord[] directions = ortho ? [Coord.North, Coord.South, Coord.East, Coord.West] : 
+        Coord[] directions = ortho ? [Coord.North, Coord.South, Coord.East, Coord.West] :
                                      [Coord.NorthEast, Coord.NorthWest, Coord.SouthEast, Coord.SouthWest];
         Coord startCoord = new Coord(squareIndex);
 
@@ -42,8 +42,7 @@ static class MagicHelper {
 
                 if (nextCoord.IsValidSquare) {
                     mask.SetBit(coord.SquareIndex);
-                }
-                else { break; }
+                } else { break; }
             }
         }
 
@@ -53,7 +52,7 @@ static class MagicHelper {
     public static Bitboard LegalMoveBitboardFromBlockers(int startSquare, Bitboard blockerBitboard, bool ortho) {
         Bitboard bitboard = Bitboard.Null;
 
-        Coord[] directions = ortho ? [Coord.North, Coord.South, Coord.East, Coord.West] : 
+        Coord[] directions = ortho ? [Coord.North, Coord.South, Coord.East, Coord.West] :
                                      [Coord.NorthEast, Coord.NorthWest, Coord.SouthEast, Coord.SouthWest];
         Coord startCoord = new Coord(startSquare);
 
@@ -68,8 +67,7 @@ static class MagicHelper {
                         // and we do not add the blocker square itself to the bitboard
                         break;
                     }
-                }
-                else { break; }
+                } else { break; }
             }
         }
 

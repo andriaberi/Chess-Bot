@@ -24,7 +24,7 @@ public class Status {
         this.font = UIHelper.LoadFont(fontSize);
     }
 
-    public void Render() { 
+    public void Render() {
         Vector2 textSize = Raylib.MeasureTextEx(font, this.text, fontSize, 1);
         int x = (Settings.ScreenWidth / 2 - 4 * Settings.SquareSideLength - Settings.BorderSize) / 2 - (int) textSize.X / 2;
         int y = Settings.ScreenHeight / 2 - fontSize / 2;

@@ -19,7 +19,7 @@ abstract class Player {
     }
 
     public override String ToString() {
-        return $"{ PlayerType } | { Color }";
+        return $"{PlayerType} | {Color}";
     }
 
     public abstract Move Search(Board board, double timeRemaining);

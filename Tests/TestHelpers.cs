@@ -26,9 +26,9 @@ static class TestHelpers {
 
     // Finds the legal move written as "e2e4" / "e7e8q", fails the test if there is none
     public static Move FindMove(Board board, string uci) {
-        Move? match = MoveGenerator.GenerateMoves(board).FirstOrDefault(move => Uci(move) == uci);
-        Assert.True(match is not null, $"{uci} is not a legal move in this position");
-        return match!;
+        Move match = MoveGenerator.GenerateMoves(board).FirstOrDefault(move => Uci(move) == uci, Move.NullMove);
+        Assert.False(match.IsNull, $"{uci} is not a legal move in this position");
+        return match;
     }
 
     public static void Play(Board board, params string[] moves) {
@@ -52,7 +52,7 @@ static class TestHelpers {
     // Everything make/unmake is expected to restore (the halfmove clock is covered by KnownBugTests)
     public static string Snapshot(Board board) => string.Join(" | ",
         string.Concat(board.Square.Select(piece => piece.ToString())),
-        string.Join(",", board.Type.OrderBy(entry => entry.Key).Select(entry => entry.Value.Value)),
+        string.Join(",", board.Type.Select(bitboard => bitboard.Value)),
         board.Color[true].Value,
         board.Color[false].Value,
         board.IsWhiteTurn,

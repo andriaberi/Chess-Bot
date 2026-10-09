@@ -59,10 +59,10 @@ class Arbiter {
         }
 
         // If there is a bishop and a knight, checkmate still can be delivered
-        if  (!(board.Type[Piece.Bishop] & board.Color[true]).IsEmpty && 
+        if (!(board.Type[Piece.Bishop] & board.Color[true]).IsEmpty &&
              !(board.Type[Piece.Knight] & board.Color[true]).IsEmpty) return false;
-        
-        if  (!(board.Type[Piece.Bishop] & board.Color[false]).IsEmpty &&
+
+        if (!(board.Type[Piece.Bishop] & board.Color[false]).IsEmpty &&
              !(board.Type[Piece.Knight] & board.Color[false]).IsEmpty) return false;
 
         return true;

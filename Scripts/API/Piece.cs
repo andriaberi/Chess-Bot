@@ -1,10 +1,10 @@
 namespace Chess.API;
 
-class Piece {
+readonly struct Piece {
     // Piece is hashed into a 5 5 bit integer
     // Structure is following: CCTTT
     // C - color, T - type
-    private int value;
+    private readonly int value;
 
     public const int None = 0;
     public const int Pawn = 1;
@@ -32,12 +32,11 @@ class Piece {
     public bool IsRook => Type == Rook;
     public bool IsQueen => Type == Queen;
     public bool IsKing => Type == King;
-    
+
     // Sliding piece movements can be combined and calculated in one go
     public bool IsSlidingPiece => IsRook || IsBishop || IsQueen;
 
-    public override string ToString()
-    {
+    public override string ToString() {
         if (IsNone) return ".";
         string name = Type switch {
             Pawn => "P",
@@ -49,7 +48,7 @@ class Piece {
             _ => "?"
         };
         if (IsBlack) name = name.ToLower();
-        
+
         return name;
     }
 

@@ -66,7 +66,7 @@ class Timer {
     }
 
     private static string FormatTime(double t) {
-        int d = (int)(t * 10);
+        int d = (int) (t * 10);
         return d < 600
             ? $"{d / 10:D2}.{d % 10}"
             : $"{d / 600:D2}:{(d / 10) % 60:D2}";

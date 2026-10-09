@@ -5,7 +5,7 @@ using Raylib_cs;
 class Theme {
     // Board
     public static Color BackgroundColor = new Color(20, 20, 20, 255);
-    
+
     public static Color DeskBackCol = new Color(36, 38, 46, 255);
 
     public static Color LightCol = new Color(238, 216, 192, 255);

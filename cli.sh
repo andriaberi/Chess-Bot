@@ -176,7 +176,6 @@ cmd_run() {
 	require_dotnet
 	step "Building chess-bot" "Built chess-bot $DIM→ bin/$CONFIG/$RESET" \
 		dotnet build "$PROJECT" -c "$CONFIG" -nologo || exit 1
-	rule
 	exec dotnet run --project "$PROJECT" -c "$CONFIG" --no-build
 }
 

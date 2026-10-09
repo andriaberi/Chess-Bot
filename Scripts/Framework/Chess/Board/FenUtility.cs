@@ -48,14 +48,14 @@ class FenUtility {
 
                 board.Type[type].SetBit(squareIndex);
                 board.Color[isWhite].SetBit(squareIndex);
-                
+
                 Piece piece = new Piece(type, isWhite ? Piece.White : Piece.Black);
 
                 board.Square[squareIndex] = piece;
                 squareIndex++;
             }
         }
-        
+
         board.IsWhiteTurn = parts[1] == "w";
 
         board.CastlingRights |= parts[2].Contains('K') ? 0b1000 : 0;

@@ -55,10 +55,10 @@ class Button {
 
     private Color LerpColor(Color a, Color b, float t) {
         return new Color(
-            (byte)(a.R + t * (b.R - a.R)),
-            (byte)(a.G + t * (b.G - a.G)),
-            (byte)(a.B + t * (b.B - a.B)),
-            (byte)(a.A + t * (b.A - a.A))
+            (byte) (a.R + t * (b.R - a.R)),
+            (byte) (a.G + t * (b.G - a.G)),
+            (byte) (a.B + t * (b.B - a.B)),
+            (byte) (a.A + t * (b.A - a.A))
         );
     }
 }

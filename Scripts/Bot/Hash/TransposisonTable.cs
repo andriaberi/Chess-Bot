@@ -9,15 +9,15 @@ static class TranspositionTable {
 
     // Retrieve entry from the table using Zobrist key
     public static HashEntry GetEntry(ulong zobristKey) =>
-        table[zobristKey % (ulong)TableSize];
+        table[zobristKey % (ulong) TableSize];
 
     // Store entry in the table at Zobrist-indexed location
     public static void StoreEntry(ulong zobristKey, HashEntry entry) =>
-        table[zobristKey % (ulong)TableSize] = entry;
+        table[zobristKey % (ulong) TableSize] = entry;
 
     // Try to retrieve an entry and check if it matches the given Zobrist key
     public static bool TryProbe(ulong zobristKey, out HashEntry entry) {
-        int index = (int)(zobristKey % (ulong)TableSize);
+        int index = (int) (zobristKey % (ulong) TableSize);
         entry = table[index];
         return entry.key == zobristKey;
     }

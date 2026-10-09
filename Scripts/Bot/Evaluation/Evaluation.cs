@@ -33,8 +33,8 @@ class Evaluation {
         eval += MoveUpEvaluation(board, true) - MoveUpEvaluation(board, false);
 
         // Since we are evaluating the board from the white's perspective, we need to negate the value if it's black
-        return eval * (board.IsWhiteTurn ? 1 : -1); 
-    }   
+        return eval * (board.IsWhiteTurn ? 1 : -1);
+    }
 
     private static int CalculateMaterial(Board board, bool isWhite, bool pawns = true) {
         int eval = 0;
@@ -94,6 +94,6 @@ class Evaluation {
 
     private static float CalculateEndgameWeight(Board board, bool isWhite) {
         float multiplier = 1 / endgameMaterialStart;
-        return 1 - Math.Min(1, multiplier * CalculateMaterial(board, isWhite, pawns : false));
+        return 1 - Math.Min(1, multiplier * CalculateMaterial(board, isWhite, pawns: false));
     }
 }
