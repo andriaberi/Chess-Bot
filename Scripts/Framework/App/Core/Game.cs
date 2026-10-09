@@ -21,6 +21,8 @@ class Game {
     private Player player;
     private Status gameStatus;
     private Menu buttons;
+    private BotInfo botInfo;
+    private EvalBar evalBar;
 
     private OpeningBook openingBook;
 
@@ -56,6 +58,9 @@ class Game {
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
         gameStatus = new Status("");
         buttons = new Menu();
+        botInfo = new BotInfo();
+        evalBar = new EvalBar();
+        Bot.LastSearch = null;
 
         if (!File.Exists("Resources/Openings/Books.bin")) {
             OpeningBook.GenerateBinaryOpeningBook("Resources/Openings/Books.txt", "Resources/Openings/Books.bin");
@@ -123,6 +128,7 @@ class Game {
 
             Move move = openingBook.GetMove(chessBoard.MovesMade);
             if (move.IsNull) move = currentPlayer.Search(chessBoard, chessBoard.IsWhiteTurn ? whiteTimer.Time : blackTimer.Time); // You can pass the token here if supported
+            else Bot.LastSearch = new SearchInfo(move, 0, 0, 0, 0, 0, 0, DateTime.Now, FromBook: true);
 
             animationTokenSource = new CancellationTokenSource();
             var animToken = animationTokenSource.Token;
@@ -209,6 +215,9 @@ class Game {
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
         gameStatus = new Status("");
         buttons = new Menu();
+        botInfo = new BotInfo();
+        evalBar = new EvalBar();
+        Bot.LastSearch = null;
 
         openingBook = new OpeningBook();
 
@@ -224,6 +233,8 @@ class Game {
 
     public void Render() {
         buttons.Render();
+        botInfo.Render();
+        evalBar.Render();
         board.Render();
         coord.Render();
         position.Render();

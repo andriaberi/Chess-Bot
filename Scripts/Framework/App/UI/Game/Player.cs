@@ -17,7 +17,7 @@ class Player {
     private static int offset = 10;
 
     private Font font = UIHelper.LoadFont(fontSize);
-    private Color fontColor = new Color(190, 230, 235, 255);
+    private Color fontColor = Theme.PlayerTextColor;
 
     private void RenderWhite() {
         int spaceBetween = Settings.ScreenHeight / 2 - (Settings.SquareSideLength * 4 + Settings.BorderSize);

@@ -17,6 +17,9 @@ class Theme {
     public static Color SelectedLight = new Color(221, 208, 124, 255);
     public static Color SelectedDark = new Color(197, 158, 94, 255);
 
+    // Player Labels
+    public static Color PlayerTextColor = new Color(190, 230, 235, 255);
+
     // Game Status
     public static Color CheckmateTextColor = new Color(200, 63, 73, 255);
     public static Color StalemateTextColor = new Color(73, 151, 208, 255);
