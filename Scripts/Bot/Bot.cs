@@ -148,11 +148,20 @@ class Bot {
 
     // Orders moves to improve alpha-beta efficiency
     public static void Order(ref List<Move> moves, Board board) {
-        moves.Sort((a, b) => Score(b, board) - Score(a, board));
+        // Squares attacked by the opponent are the same for every move, so compute them once
+        Bitboard unsafeSquares = MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn);
+
+        Move[] sorted = moves.ToArray();
+        int[] scores = new int[sorted.Length];
+        for (int i = 0; i < sorted.Length; i++) scores[i] = -Score(sorted[i], board, unsafeSquares);
+
+        Array.Sort(scores, sorted); // Ascending on negated scores = best move first
+        moves.Clear();
+        moves.AddRange(sorted);
     }
 
     // Heuristic move scoring for ordering
-    public static int Score(Move move, Board board) {
+    public static int Score(Move move, Board board, Bitboard unsafeSquares) {
         if (move == overallBestMove) return positiveInfinity; // Prioritize best move found in previous iterations
 
         int score = 0;
@@ -169,7 +178,7 @@ class Bot {
             score += PieceValue[move.PromotingTo];
 
         // Discourage moving into danger
-        if (MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn).Contains(move.Target))
+        if (unsafeSquares.Contains(move.Target))
             score -= PieceValue[movedPiece];
 
         return score;
