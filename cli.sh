@@ -154,6 +154,7 @@ ${B}Build${R}
 
 ${B}Test${R}
   ${A}test${R}      Run the tests
+  ${A}perft${R}     Run the perft tests as a table
   ${A}check${R}     Build everything and test           
   ${A}format${R}    Fix whitespace to match .editorconfig
 
@@ -188,6 +189,58 @@ cmd_test() {
 	summary=$(sed -nE 's/.*Passed: +([0-9]+), Skipped: +([0-9]+), Total: +[0-9]+, Duration: +([^-]*[^ -]) +-.*/\1 passed, \2 skipped in \3/p' "$STEP_LOG" | head -1)
 	[[ -n $summary ]] && printf '  %s%s%s\n' "$DIM" "$summary" "$RESET"
 	return 0
+}
+
+# perft — runs the perft tests and prints their results as a table.
+cmd_perft() {
+	require_dotnet
+	local results status=0
+	results=$(mktemp -d)
+
+	step "Running perft" "Perft finished" \
+		dotnet test Tests/Tests.csproj -c "$CONFIG" -nologo --filter "FullyQualifiedName~PerftTests" \
+		--logger "trx;LogFileName=perft.trx" --results-directory "$results" || status=1
+
+	[[ -f $results/perft.trx ]] && perft_table "$results/perft.trx"
+	rm -rf "$results"
+	return "$status"
+}
+
+# perft_table TRX — one row per position and depth, read from the test results file.
+perft_table() {
+	# Each result looks like testName="...Perft(name: &quot;Kiwipete&quot;, fen: ..., depth: 2, expected: 2039)" duration="00:00:00.0012" outcome="Passed"
+	grep -o '<UnitTestResult [^>]*>' "$1" \
+		| sed -E 's/.*name: &quot;([^&]*)&quot;.*depth: ([0-9]+), expected: ([0-9]+)\)".*duration="([0-9:.]+)".*outcome="([A-Za-z]+)".*/\1|\2|\3|\4|\5/' \
+		| sort -t'|' -k1,1 -k2,2n \
+		| awk -F'|' -v B="$BOLD" -v D="$DIM" -v R="$RESET" -v G="$GREEN" -v X="$RED" '
+			function commas(n,   s, out) {
+				s = sprintf("%d", n); out = ""
+				while (length(s) > 3) { out = "," substr(s, length(s) - 2) out; s = substr(s, 1, length(s) - 3) }
+				return s out
+			}
+			function duration(ms) {
+				if (ms < 1) return "<1 ms"
+				if (ms < 1000) return sprintf("%d ms", ms)
+				return sprintf("%.2f s", ms / 1000)
+			}
+			function speed(nodes, ms) {
+				if (ms < 1) return "-"
+				nodes = nodes / ms * 1000
+				return nodes >= 1e6 ? sprintf("%.1fM/s", nodes / 1e6) : sprintf("%.0fk/s", nodes / 1e3)
+			}
+			BEGIN { printf "\n  %s%-12s %5s %12s %9s %9s%s\n", B, "Position", "Depth", "Nodes", "Time", "Speed", R }
+			{
+				split($4, t, ":"); ms = (t[1] * 3600 + t[2] * 60 + t[3]) * 1000; total += ms
+				if ($1 != previous && NR > 1) print ""
+				name = $1 == previous ? "" : $1; previous = $1
+				if ($5 == "Passed") { mark = G "✓" R; passed++ } else { mark = X "✗" R; failed++ }
+				printf "  %-12s %5d %12s %9s %9s  %s\n", name, $2, commas($3), duration(ms), speed($3, ms), mark
+			}
+			END {
+				printf "\n  %s%d passed", D, passed
+				if (failed) printf "%s, %s%d failed%s", R, X, failed, D
+				printf " in %s%s\n", duration(total), R
+			}'
 }
 
 cmd_check() {
@@ -239,6 +292,6 @@ cmd_clean() {
 }
 
 case ${1:-help} in
-	help|install|build|run|publish|clean|test|check|format) cmd=$1; shift; "cmd_$cmd" "$@" ;;
+	help|install|build|run|publish|clean|test|perft|check|format) cmd=$1; shift; "cmd_$cmd" "$@" ;;
 	*) fail "Unknown command '$1'"; printf '\n' >&2; cmd_help >&2; exit 1 ;;
 esac
