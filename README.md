@@ -81,6 +81,7 @@ Run `make` on its own to see every command:
 | `make publish` | Package a self-contained build into `dist/` (`RID=linux-x64\|win-x64\|osx-x64\|osx-arm64`, or pick from a menu) |
 | `make clean` | Remove build artifacts |
 | `make test` | Run the tests |
+| `make perft` | Run the perft tests and show nodes, time and speed per position and depth |
 | `make check` | Build everything and test (what CI runs) |
 | `make format` | Fix whitespace to match `.editorconfig` |
 

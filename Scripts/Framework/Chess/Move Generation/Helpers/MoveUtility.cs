@@ -3,9 +3,9 @@ namespace Chess.ChessEngine;
 using Chess.API;
 
 class MoveUtility {
-    static List<Piece> killedPiece = new List<Piece>();
-    static List<int> castlingRights = new List<int>();
-    static List<int> halfMoveClock = new List<int>();
+    // What MakeMove overwrites, so UnmakeMove can restore it; one entry per move made
+    readonly record struct UndoState(Piece KilledPiece, int CastlingRights, int HalfMoveClock);
+    static List<UndoState> history = new List<UndoState>();
 
 
     public static void MakeMove(Board board, Move move) {
@@ -15,9 +15,7 @@ class MoveUtility {
             board.HalfMoveClock++;
         }
 
-        killedPiece.Add(board.Square[move.Target]);
-        castlingRights.Add(board.CastlingRights);
-        halfMoveClock.Add(board.HalfMoveClock);
+        history.Add(new UndoState(board.Square[move.Target], board.CastlingRights, board.HalfMoveClock));
 
         board.EnPassantSquare = -1;
 
@@ -204,25 +202,23 @@ class MoveUtility {
             board.Square[move.Target] = new Piece(Piece.Pawn, board.IsWhiteTurn ? Piece.White : Piece.Black);
         }
 
+        UndoState undo = history[^1];
+        history.RemoveAt(history.Count - 1);
+
         // Restore target piece bitboard if it was captured
-        if (killedPiece[killedPiece.Count - 1].Type != Piece.None) {
-            board.Type[killedPiece[killedPiece.Count - 1].Type].SetBit(move.Target);
+        if (undo.KilledPiece.Type != Piece.None) {
+            board.Type[undo.KilledPiece.Type].SetBit(move.Target);
             board.Color[!board.IsWhiteTurn].SetBit(move.Target);
         }
 
         // Restore square array
         board.Square[move.Source] = board.Square[move.Target];
-        board.Square[move.Target] = killedPiece[killedPiece.Count - 1];
+        board.Square[move.Target] = undo.KilledPiece;
 
         // Restore castling rights
-        board.CastlingRights = castlingRights[castlingRights.Count - 1];
+        board.CastlingRights = undo.CastlingRights;
 
         // Update halfmove clock
-        board.HalfMoveClock = halfMoveClock[halfMoveClock.Count - 1];
-
-        // Remove last elements from history
-        killedPiece.RemoveAt(killedPiece.Count - 1);
-        castlingRights.RemoveAt(castlingRights.Count - 1);
-        halfMoveClock.RemoveAt(halfMoveClock.Count - 1);
+        board.HalfMoveClock = undo.HalfMoveClock;
     }
 }

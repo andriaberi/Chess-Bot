@@ -164,20 +164,22 @@ class MoveGenerator {
         board.Type[Piece.King].ClearBit(index);
         board.Color[board.IsWhiteTurn].ClearBit(index);
 
-        moveSet &= ~MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn);
+        Bitboard unsafeSquares = MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn);
+        moveSet &= ~unsafeSquares;
 
         board.Type[Piece.King].SetBit(index);
         board.Color[board.IsWhiteTurn].SetBit(index);
 
         MoveHelper.ExtractMoves(moves, moveSet, index);
-        CastlingMoves(board, index, moves);
+        CastlingMoves(board, index, unsafeSquares, moves);
 
         kings.ClearBit(index);
 
     }
 
-    public static void CastlingMoves(Board board, int kingIndex, List<Move> moves) {
-        Bitboard unsafeBitboard = MoveHelper.GetUnsafeSquares(board, board.IsWhiteTurn);
+    // unsafeBitboard is computed with the king removed (see KingMoves); that only adds squares attacked
+    // through the king, and those mean the king is in check, which already rules out castling
+    public static void CastlingMoves(Board board, int kingIndex, Bitboard unsafeBitboard, List<Move> moves) {
 
         // If king is in check, player can't castle
         if ((unsafeBitboard & BitboardHelper.GetBitAt(kingIndex)) != Bitboard.Null) return;
@@ -242,7 +244,7 @@ class MoveGenerator {
     public static void GenerateAttackRays(Board board) {
         attackRays = new Bitboard(0xFFFFFFFFFFFFFFFF);
         Bitboard temp = new Bitboard(0x0000000000000000);
-        attackerIndexes = new List<int>();
+        attackerIndexes.Clear();
 
         int kingIndex = (board.Type[Piece.King] & board.Color[board.IsWhiteTurn]).FirstBit;
 
