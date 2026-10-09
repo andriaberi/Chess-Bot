@@ -197,7 +197,7 @@ cmd_perft() {
 	local results status=0
 	results=$(mktemp -d)
 
-	step "Running perft" "Perft finished" \
+	step "Running perft" "Ran perft" \
 		dotnet test Tests/Tests.csproj -c "$CONFIG" -nologo --filter "FullyQualifiedName~PerftTests" \
 		--logger "trx;LogFileName=perft.trx" --results-directory "$results" || status=1
 
@@ -223,23 +223,41 @@ perft_table() {
 				if (ms < 1000) return sprintf("%d ms", ms)
 				return sprintf("%.2f s", ms / 1000)
 			}
+			# Blank when the run is too short to time meaningfully
 			function speed(nodes, ms) {
-				if (ms < 1) return "-"
+				if (ms < 1) return ""
 				nodes = nodes / ms * 1000
-				return nodes >= 1e6 ? sprintf("%.1fM/s", nodes / 1e6) : sprintf("%.0fk/s", nodes / 1e3)
+				return nodes >= 1e6 ? sprintf("%.1f M/s", nodes / 1e6) : sprintf("%.0f k/s", nodes / 1e3)
 			}
-			BEGIN { printf "\n  %s%-12s %5s %12s %9s %9s%s\n", B, "Position", "Depth", "Nodes", "Time", "Speed", R }
+			function repeat(text, count,   out) { out = ""; while (count-- > 0) out = out text; return out }
+			# border LEFT MIDDLE RIGHT — a horizontal line across all columns
+			function border(left, middle, right,   i, line) {
+				line = left
+				for (i = 1; i <= columns; i++) line = line repeat("─", width[i] + 2) (i < columns ? middle : right)
+				return D line R
+			}
+			BEGIN {
+				columns = split("10 5 12 7 8 1", width, " ")
+				bar = D "│" R
+				print border("┌", "┬", "┐")
+				printf "%s %s%-10s%s %s %s%5s%s %s %s%12s%s %s %s%7s%s %s %s%8s%s %s   %s\n", \
+					bar, B, "Position", R, bar, B, "Depth", R, bar, B, "Nodes", R, \
+					bar, B, "Time", R, bar, B, "Speed", R, bar, bar
+				print border("├", "┼", "┤")
+			}
 			{
 				split($4, t, ":"); ms = (t[1] * 3600 + t[2] * 60 + t[3]) * 1000; total += ms
-				if ($1 != previous && NR > 1) print ""
+				if ($1 != previous && NR > 1) print border("├", "┼", "┤")
 				name = $1 == previous ? "" : $1; previous = $1
 				if ($5 == "Passed") { mark = G "✓" R; passed++ } else { mark = X "✗" R; failed++ }
-				printf "  %-12s %5d %12s %9s %9s  %s\n", name, $2, commas($3), duration(ms), speed($3, ms), mark
+				printf "%s %-10s %s %5d %s %12s %s %7s %s %8s %s %s %s\n", \
+					bar, name, bar, $2, bar, commas($3), bar, duration(ms), bar, speed($3, ms), bar, mark, bar
 			}
 			END {
-				printf "\n  %s%d passed", D, passed
-				if (failed) printf "%s, %s%d failed%s", R, X, failed, D
-				printf " in %s%s\n", duration(total), R
+				print border("└", "┴", "┘")
+				printf "  %d passed", passed
+				if (failed) printf ", %s%d failed%s", X, failed, R
+				printf " in %s\n", duration(total)
 			}'
 }
 
