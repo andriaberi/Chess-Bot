@@ -13,21 +13,11 @@ class Board {
     public List<ulong> PastZobristKeys = new List<ulong>();
     public List<Move> MovesMade = new List<Move>();
 
-    // Bitboard for pieces
-    public Dictionary<int, Bitboard> Type = new Dictionary<int, Bitboard> {
-        { Piece.Pawn, new Bitboard(0) },
-        { Piece.Knight, new Bitboard(0) },
-        { Piece.Bishop, new Bitboard(0) },
-        { Piece.Rook, new Bitboard(0) },
-        { Piece.Queen, new Bitboard(0) },
-        { Piece.King, new Bitboard(0) },
-    };
+    // Bitboard for pieces, indexed by piece type
+    public Bitboard[] Type = new Bitboard[7];
 
-    // Bitboard for colors
-    public Dictionary<bool, Bitboard> Color = new Dictionary<bool, Bitboard> {
-        { true, new Bitboard(0) }, // White
-        { false, new Bitboard(0) }, // Black
-    };
+    // Bitboard for colors, indexed by isWhite
+    public ColorBitboards Color = new ColorBitboards();
 
     public Bitboard Occupied => Color[true] | Color[false];
     public Bitboard Empty => ~Occupied;
@@ -73,4 +63,13 @@ class Board {
         }
         return count;
     }
+}
+
+// Two bitboards indexed by color (true = white, false = black)
+// The indexer returns a reference so callers can update the bitboard in place
+class ColorBitboards {
+    private Bitboard white;
+    private Bitboard black;
+
+    public ref Bitboard this[bool isWhite] => ref (isWhite ? ref white : ref black);
 }

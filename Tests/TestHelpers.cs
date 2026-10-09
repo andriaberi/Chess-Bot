@@ -52,7 +52,7 @@ static class TestHelpers {
     // Everything make/unmake is expected to restore (the halfmove clock is covered by KnownBugTests)
     public static string Snapshot(Board board) => string.Join(" | ",
         string.Concat(board.Square.Select(piece => piece.ToString())),
-        string.Join(",", board.Type.OrderBy(entry => entry.Key).Select(entry => entry.Value.Value)),
+        string.Join(",", board.Type.Select(bitboard => bitboard.Value)),
         board.Color[true].Value,
         board.Color[false].Value,
         board.IsWhiteTurn,

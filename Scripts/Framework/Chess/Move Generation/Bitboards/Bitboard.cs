@@ -1,6 +1,9 @@
 namespace Chess.ChessEngine;
 
-class Bitboard {
+using System.Numerics;
+
+// A struct, so bitboard operations don't allocate
+struct Bitboard {
     public ulong Value;
 
     public Bitboard(ulong value) {
@@ -12,9 +15,9 @@ class Bitboard {
 
     // For example 1236 is 10011010100 in binary 
     // The result of the function will be 2, because rightmost bit that is 1 is at index 2
-    public int FirstBit => (int) Math.Log2(Value & (ulong) -(long) Value);
+    public int FirstBit => BitOperations.TrailingZeroCount(Value);
 
-    public bool IsEmpty => this == Null;
+    public bool IsEmpty => Value == 0;
     public bool Contains(int index) => (Value & (1UL << index)) != 0;
 
     public static Bitboard operator |(Bitboard a, Bitboard b) => new Bitboard(a.Value | b.Value);
@@ -30,10 +33,10 @@ class Bitboard {
 
     public static bool operator ==(Bitboard a, Bitboard b) => a.Value == b.Value;
     public static bool operator !=(Bitboard a, Bitboard b) => a.Value != b.Value;
-    public override bool Equals(object? obj) => base.Equals(obj);
-    public override int GetHashCode() => base.GetHashCode();
+    public override bool Equals(object? obj) => obj is Bitboard other && Value == other.Value;
+    public override int GetHashCode() => Value.GetHashCode();
 
-    public static Bitboard Null => new Bitboard(0);
+    public static readonly Bitboard Null = new Bitboard(0);
 
     // Reverses bitboard
     // 100101011101010 -> 010101110101001
@@ -56,16 +59,6 @@ class Bitboard {
 
     // Counts the number of bits that are set to 1
     // 100101011101010 -> 8
-    public int Count() {
-        Bitboard temp = new Bitboard(this.Value);
-
-        int cnt = 0;
-        while (!temp.IsEmpty) {
-            temp.ClearBit(temp.FirstBit);
-            cnt++;
-        }
-
-        return cnt;
-    }
+    public int Count() => BitOperations.PopCount(Value);
 }
 
