@@ -229,10 +229,9 @@ cmd_publish() {
 	step "Publishing $rid" "Published $rid $DIM→ $out/$RESET" \
 		dotnet publish "$PROJECT" -c Release -r "$rid" --self-contained -nologo -o "$out" || exit 1
 
-	# The app loads fonts, sprites, sounds and openings from Chess/Resources next to where it runs
-	mkdir -p "$out/Chess"
-	cp -r Chess/Resources "$out/Chess/"
-	note "Run it from inside that folder so it can find Chess/Resources"
+	# The app loads fonts, sprites, sounds and openings from Resources next to where it runs
+	cp -r Resources "$out/"
+	note "Run it from inside that folder so it can find Resources"
 }
 
 cmd_clean() {

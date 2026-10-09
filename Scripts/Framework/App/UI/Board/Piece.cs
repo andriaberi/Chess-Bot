@@ -8,7 +8,7 @@ using System.Numerics;
 class Piece {
     public Coord Coord;
     public float X, Y;
-    private string imgURL = "Chess/Resources/Sprites/"; // Every piece image is stored in this directory
+    private string imgURL = "Resources/Sprites/"; // Every piece image is stored in this directory
     private Texture2D texture; // Preloaded texture to avoid loading it every frame
 
     public Piece(API.Piece piece, Coord coord) {

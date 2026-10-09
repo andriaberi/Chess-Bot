@@ -19,7 +19,7 @@ class UIHelper {
     public static int GetScreenY(Coord coord) => GetScreenY(coord.RowIndex);
 
     public static Font LoadFont(int fontSize) {
-        string fontPath = "Chess/Resources/Fonts/Nunito-Medium.ttf";
+        string fontPath = "Resources/Fonts/Nunito-Medium.ttf";
         return Raylib.LoadFontEx(fontPath, fontSize, null, 0);
     }
 
