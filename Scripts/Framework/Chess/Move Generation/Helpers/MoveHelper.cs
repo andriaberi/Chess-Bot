@@ -17,16 +17,13 @@ class MoveHelper {
 
     // Step 3: Repeat the process for the rook's column.
     public static Bitboard StraightMoves(Board board, int index) {
-        Bitboard occupied = (Masks.Row[BoardHelper.RowIndex(index)] | Masks.Column[BoardHelper.ColumnIndex(index)]) & board.Occupied ^ BitboardHelper.GetBitAt(index);
-
-        return Magic.GetSliderAttacks(index, occupied, true);
+        // The magic lookup masks the occupancy itself, so the whole board can be passed in
+        return Magic.GetRookAttacks(index, board.Occupied);
     }
 
     // Same as the StraightMoves method, but we're now calculating the diagonal moves.
     public static Bitboard DiagonalMoves(Board board, int index) {
-        Bitboard occupied = (Masks.Diagonal[BoardHelper.DiagonalIndex(index)] | Masks.AntiDiagonal[BoardHelper.AntiDiagonalIndex(index)]) & board.Occupied ^ BitboardHelper.GetBitAt(index);
-
-        return Magic.GetSliderAttacks(index, occupied, false);
+        return Magic.GetBishopAttacks(index, board.Occupied);
     }
 
     // Key idea: Get all the squares that are attacked by the enemy pieces
