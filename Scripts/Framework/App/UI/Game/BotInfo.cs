@@ -11,7 +11,7 @@ class BotInfo {
     private const int Width = UIHelper.LeftColumnWidth;
     private const int Padding = 22;
     private const int ProgressHeight = 4;
-    private const int CaptionFontSize = 32;
+    private const int CaptionFontSize = 30;
     private const int MoveFontSize = 56;
     private const int FontSize = 34;
     private const int RowHeight = 46;
@@ -42,7 +42,7 @@ class BotInfo {
         int x = UIHelper.LeftColumnX;
         int y = UIHelper.BoardTop;
 
-        Raylib.DrawRectangle(x, y, Width, Height, Theme.DeskBackCol);
+        Raylib.DrawRectangle(x, y, Width, Height, Theme.ButtonColor);
 
         // Think time used so far, out of the time the bot gave itself for this move
         if (info != null && info.Thinking && info.TimeLimit > 0) {
@@ -51,16 +51,17 @@ class BotInfo {
         }
 
         int contentY = y + ProgressHeight + Padding;
-        Raylib.DrawTextEx(captionFont, "Best Move", new Vector2(x + Padding, contentY), CaptionFontSize, 1, Theme.ButtonTextColor);
+        string caption = info != null && info.FromBook ? "Book Move" : "Best Move";
+        Raylib.DrawTextEx(captionFont, caption, new Vector2(x + Padding, contentY), CaptionFontSize, 1, Theme.ButtonTextColor);
         contentY += CaptionFontSize;
 
         string move = info == null || info.Move.IsNull ? "-" : FormatMove(info.Move);
         string eval = searched && info!.Depth > 0 ? FormatEval(info) : "";
         Raylib.DrawTextEx(moveFont, move, new Vector2(x + Padding, contentY), MoveFontSize, 1, Theme.ButtonHoverTextColor);
-        DrawRightAligned(moveFont, eval, x + Width - Padding, contentY, MoveFontSize, Theme.PlayerTextColor);
+        DrawRightAligned(moveFont, eval, x + Width - Padding, contentY, MoveFontSize, Theme.ButtonTextColor);
         contentY += MoveFontSize + Padding;
 
-        Raylib.DrawRectangle(x + Padding, contentY, Width - Padding * 2, 2, Theme.ButtonColor);
+        Raylib.DrawRectangle(x + Padding, contentY, Width - Padding * 2, 2, Theme.ButtonTextColor);
         contentY += 2 + Padding / 2;
 
         int rowY = contentY + (RowHeight - FontSize) / 2;
