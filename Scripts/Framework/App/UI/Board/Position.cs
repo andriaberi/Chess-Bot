@@ -10,6 +10,8 @@ class Position {
     private List<Piece> pieces;
     private int draggedPiece = -1; // To keep track of the piece during dragging
     private int animatedPiece = -1; // To keep track of the piece during animation
+    private int selectedSquare = -1; // Square of the piece picked by click or drag, whose moves are highlighted
+    private bool wasSelected = false; // Whether the pressed piece was already selected, so releasing on it deselects it
 
     private int promotionLastChecked = -1;
 
@@ -40,26 +42,33 @@ class Position {
             return;
         }
 
-        Move move = Move.NullMove;
+        // Nothing can be selected while it isn't a human's turn
+        if (!highlightMoves && selectedSquare != -1) Deselect(boardUI);
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Left)) {
-            int x = Raylib.GetMouseX();
-            int y = Raylib.GetMouseY();
+            int square = SquareUnderMouse();
 
-            foreach (Piece piece in pieces) {
-                // If mouse is not hovering on a piece, ignore it
-                Rectangle rect = new Rectangle(piece.X, piece.Y, Settings.SquareSideLength, Settings.SquareSideLength);
-                if (!Raylib.CheckCollisionPointRec(new Vector2(x, y), rect)) continue;
+            // With a piece selected, clicking one of its highlighted squares plays the move
+            if (selectedSquare != -1 && square != -1 && boardUI.IsValidToMove(square)) {
+                int source = selectedSquare;
+                selectedSquare = -1;
+                PlayMove(source, square, board, boardUI, ref whiteTimerUI, ref blackTimerUI);
+                return;
+            }
 
-                draggedPiece = pieces.IndexOf(piece); // Drag the piece
+            wasSelected = square != -1 && square == selectedSquare;
+            Deselect(boardUI);
 
-                // If the piece is of the current player, highlight its valid moves
-                if (board.Square[piece.Coord.SquareIndex].IsWhite == board.IsWhiteTurn && highlightMoves) {
-                    boardUI.HighlightValidMoves(ChessEngine.MoveGenerator.GenerateMoves(board, piece.Coord.SquareIndex));
-                    boardUI.HighlightSquare(piece.Coord.SquareIndex);
+            int index = pieces.FindIndex(p => p.Coord.SquareIndex == square);
+            if (index != -1) {
+                draggedPiece = index; // Drag the piece
+
+                // If the piece is of the current player, select it and highlight its valid moves
+                if (board.Square[square].IsWhite == board.IsWhiteTurn && highlightMoves) {
+                    selectedSquare = square;
+                    boardUI.HighlightValidMoves(ChessEngine.MoveGenerator.GenerateMoves(board, square));
+                    boardUI.HighlightSquare(square);
                 }
-
-                break; // To avoid dragging multiple pieces
             }
         }
 
@@ -69,77 +78,87 @@ class Position {
             pieces[draggedPiece].Y = Raylib.GetMouseY() - Settings.SquareSideLength / 2;
         }
 
-        if (Raylib.IsMouseButtonReleased(MouseButton.Left)) {
-            bool placedOnValidSquare = false;
+        if (Raylib.IsMouseButtonReleased(MouseButton.Left) && draggedPiece != -1) {
+            int source = pieces[draggedPiece].Coord.SquareIndex;
+            int square = SquareUnderMouse();
 
-            for (int i = 0; i < 64; i++) {
-                // If the mouse is not hovering on a square, ignore it
-                Rectangle rect = new Rectangle(UIHelper.GetScreenX(i % 8), UIHelper.GetScreenY(i / 8), Settings.SquareSideLength, Settings.SquareSideLength);
-                if (!Raylib.CheckCollisionPointRec(new Vector2(Raylib.GetMouseX(), Raylib.GetMouseY()), rect)) continue;
-
-                // If the piece is not dragged or the square is not a valid move, ignore
-                if (draggedPiece == -1 || !boardUI.IsValidToMove(i)) continue;
-
-                // Promotion waits for the player to pick a piece, the pawn stays put until then
-                int source = pieces[draggedPiece].Coord.SquareIndex;
-                if (board.Square[source].IsPawn && (i < 8 || i > 55)) {
-                    OpenPromotionPicker(source, i, board.IsWhiteTurn);
-                    pieces[draggedPiece].ResetPosition();
-                    placedOnValidSquare = true;
-                    continue;
-                }
-
-                // If other piece was killed, remove it from the list
-                if (pieces.FindIndex(p => p.Coord == new Coord(i)) != -1) {
-                    int index = pieces.FindIndex(p => p.Coord == new Coord(i));
-                    pieces.RemoveAt(index);
-                    if (draggedPiece > index) draggedPiece--;
-                }
-
-                // Update and record the data
-                move = new Move(pieces[draggedPiece].Coord, new Coord(i));
-                boardUI.SetLastMove(move);
-
-                pieces[draggedPiece].Coord = new Coord(i);
-                pieces[draggedPiece].ResetPosition();
-
-                placedOnValidSquare = true;
-            }
-
-            if (!placedOnValidSquare && draggedPiece != -1) {
-                SoundManager.Play("Illegal");
-                pieces[draggedPiece].ResetPosition(); // If it is illegal to move on that square, reset the piece to its original position
-            }
-
-            // Reset data
+            pieces[draggedPiece].ResetPosition();
             draggedPiece = -1;
+
+            if (square == source) {
+                // A click rather than a drag: the piece stays selected, and clicking it again deselects it
+                if (wasSelected) Deselect(boardUI);
+            } else if (square != -1 && boardUI.IsValidToMove(square)) {
+                selectedSquare = -1;
+                PlayMove(source, square, board, boardUI, ref whiteTimerUI, ref blackTimerUI);
+            } else {
+                SoundManager.Play("Illegal");
+                Deselect(boardUI);
+            }
+        }
+    }
+
+    private void Deselect(Board boardUI) {
+        selectedSquare = -1;
+        boardUI.Clear();
+    }
+
+    // Index of the square under the mouse, or -1 when the mouse is off the board
+    private static int SquareUnderMouse() {
+        Vector2 mouse = Raylib.GetMousePosition();
+        for (int i = 0; i < 64; i++) {
+            Rectangle rect = new Rectangle(UIHelper.GetScreenX(i % 8), UIHelper.GetScreenY(i / 8), Settings.SquareSideLength, Settings.SquareSideLength);
+            if (Raylib.CheckCollisionPointRec(mouse, rect)) return i;
+        }
+        return -1;
+    }
+
+    // Plays the human's move, whether dragged or clicked; the target must be highlighted as legal
+    private void PlayMove(int source, int target, ChessEngine.Board board, Board boardUI, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
+        // Promotion waits for the player to pick a piece, the pawn stays put until then
+        if (board.Square[source].IsPawn && (target < 8 || target > 55)) {
+            OpenPromotionPicker(source, target, board.IsWhiteTurn);
             boardUI.Clear();
+            return;
         }
-        if (!move.IsNull) {
-            // Castle
-            if (board.Square[move.Source].IsKing && Math.Abs(move.Source - move.Target) == 2) {
-                move = new Move(move.Source, move.Target, Move.Castling);
-                int rookSource = move.Target + (move.Target == 62 || move.Target == 6 ? 1 : -2);
-                int rookTarget = move.Target + (move.Target == 62 || move.Target == 6 ? -1 : 1);
 
-                int index = pieces.FindIndex(p => p.Coord.SquareIndex == rookSource);
-                pieces[index].Coord = new Coord(rookTarget);
-                pieces[index].ResetPosition();
-            }
-            // En passant
-            if (board.Square[move.Source].IsPawn && Math.Abs(move.Source - move.Target) % 8 != 0 && board.Square[move.Target].IsNone) {
-                move = new Move(move.Source, move.Target, Move.EnPassant);
+        int index = pieces.FindIndex(p => p.Coord.SquareIndex == source);
 
-                int target = board.IsWhiteTurn ? move.Target - 8 : move.Target + 8;
-                int index = pieces.FindIndex(p => p.Coord.SquareIndex == target);
-
-                pieces.RemoveAt(index);
-            }
-
-            PlaySound(move, board);
-            board.MakeMove(move, record: true);
-            SwitchTimers(board, ref whiteTimerUI, ref blackTimerUI);
+        // If other piece was killed, remove it from the list
+        int capturedIndex = pieces.FindIndex(p => p.Coord.SquareIndex == target);
+        if (capturedIndex != -1) {
+            pieces.RemoveAt(capturedIndex);
+            if (index > capturedIndex) index--;
         }
+
+        // Update and record the data
+        Move move = new Move(new Coord(source), new Coord(target));
+        boardUI.SetLastMove(move);
+
+        pieces[index].Coord = new Coord(target);
+        pieces[index].ResetPosition();
+
+        // Castle
+        if (board.Square[move.Source].IsKing && Math.Abs(move.Source - move.Target) == 2) {
+            move = new Move(move.Source, move.Target, Move.Castling);
+            int rookSource = move.Target + (move.Target == 62 || move.Target == 6 ? 1 : -2);
+            int rookTarget = move.Target + (move.Target == 62 || move.Target == 6 ? -1 : 1);
+
+            int rookIndex = pieces.FindIndex(p => p.Coord.SquareIndex == rookSource);
+            pieces[rookIndex].Coord = new Coord(rookTarget);
+            pieces[rookIndex].ResetPosition();
+        }
+        // En passant
+        if (board.Square[move.Source].IsPawn && Math.Abs(move.Source - move.Target) % 8 != 0 && board.Square[move.Target].IsNone) {
+            move = new Move(move.Source, move.Target, Move.EnPassant);
+
+            int capturedPawn = board.IsWhiteTurn ? move.Target - 8 : move.Target + 8;
+            pieces.RemoveAt(pieces.FindIndex(p => p.Coord.SquareIndex == capturedPawn));
+        }
+
+        PlaySound(move, board);
+        board.MakeMove(move, record: true);
+        SwitchTimers(board, ref whiteTimerUI, ref blackTimerUI);
     }
 
     private static void SwitchTimers(ChessEngine.Board board, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
