@@ -405,3 +405,6 @@ Games/
 
 # Builds and games from make match
 .match/
+
+# Match state fastchess saves in the folder it runs from
+config.json
