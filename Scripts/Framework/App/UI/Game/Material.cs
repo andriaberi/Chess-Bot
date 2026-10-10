@@ -34,9 +34,11 @@ class Material {
             lead += up * points;
             if (up <= 0) continue;
 
-            Texture2D icon = Icon(type, !isWhite);
+            // The pieces shown are the opponent's; black ones are drawn as gray white pieces to stay visible
+            Texture2D icon = Icon(type, true);
+            Color tint = isWhite ? Theme.CapturedBlackTint : Color.White;
             for (int i = 0; i < up; i++) {
-                Raylib.DrawTexturePro(icon, new Rectangle(0, 0, icon.Width, icon.Height), new Rectangle(x, y, IconSize, IconSize), Vector2.Zero, 0, Color.White);
+                Raylib.DrawTexturePro(icon, new Rectangle(0, 0, icon.Width, icon.Height), new Rectangle(x, y, IconSize, IconSize), Vector2.Zero, 0, tint);
                 x += IconOverlap;
             }
             x += IconSize - IconOverlap + IconGroupGap;
