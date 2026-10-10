@@ -402,3 +402,6 @@ dist/
 
 # Games saved from the in-game menu
 Games/
+
+# Builds and games from make match
+.match/

@@ -20,4 +20,37 @@
     <InternalsVisibleTo Include="Tests" />
   </ItemGroup>
 
+  <!-- Version from the nearest v* git tag: "1.2" on a tagged commit, "1.2+3" three commits later, "-dirty" with uncommitted
+       changes, "0.0+N" before the first tag. The UCI mode reports it, so match results say which versions played -->
+  <PropertyGroup>
+    <Version>0.0</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <Target Name="VersionFromGitTag" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo">
+    <Exec Command="git describe --tags --match &quot;v[0-9]*&quot; --long --dirty" ConsoleToMSBuild="true" IgnoreExitCode="true"
+          StandardOutputImportance="low" StandardErrorImportance="low" EchoOff="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitDescribe" />
+      <Output TaskParameter="ExitCode" PropertyName="GitDescribeExitCode" />
+    </Exec>
+    <Exec Command="git rev-list --count HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true" Condition="'$(GitDescribeExitCode)' != '0'"
+          StandardOutputImportance="low" StandardErrorImportance="low" EchoOff="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitCount" />
+    </Exec>
+
+    <!-- git describe gives e.g. v1.2-3-gabc1234-dirty -->
+    <PropertyGroup Condition="'$(GitDescribeExitCode)' == '0'">
+      <GitTagVersion>$([System.Text.RegularExpressions.Regex]::Match($(GitDescribe), '^v([0-9.]+)-').Groups[1].Value)</GitTagVersion>
+      <GitCommitsSinceTag>$([System.Text.RegularExpressions.Regex]::Match($(GitDescribe), '-([0-9]+)-g').Groups[1].Value)</GitCommitsSinceTag>
+      <InformationalVersion>$(GitTagVersion)</InformationalVersion>
+      <InformationalVersion Condition="'$(GitCommitsSinceTag)' != '0'">$(InformationalVersion)+$(GitCommitsSinceTag)</InformationalVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(GitDescribeExitCode)' != '0' And '$(GitCommitCount)' != ''">
+      <InformationalVersion>0.0+$(GitCommitCount)</InformationalVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(GitDescribeExitCode)' == '0' And $(GitDescribe.EndsWith('-dirty'))">
+      <InformationalVersion>$(InformationalVersion)-dirty</InformationalVersion>
+    </PropertyGroup>
+  </Target>
+
 </Project>

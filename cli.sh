@@ -8,6 +8,7 @@ SOLUTION=Chess-Bot.sln
 PROJECT=Chess-Bot.csproj
 CONFIG=${CONFIG:-Release}
 DIST_DIR=${DIST_DIR:-dist}
+MATCH_DIR=${MATCH_DIR:-.match}
 RUNTIMES=(linux-x64 win-x64 osx-x64 osx-arm64)
 
 # Style
@@ -158,7 +159,12 @@ ${B}Test${R}
   ${A}check${R}     Build everything and test           
   ${A}format${R}    Fix whitespace to match .editorconfig
 
+${B}Engine${R}
+  ${A}match${R}     Play two versions against each other
+
 ${D}Without RID, publish opens a picker.${R}
+${D}match OLD=v1.0 plays your working tree against v1.0; NEW=<version> picks another side,
+GAMES=200 and TC=10+0.1 set the length. Needs fastchess or cutechess-cli on PATH.${R}
 EOF
 }
 
@@ -305,11 +311,92 @@ cmd_publish() {
 }
 
 cmd_clean() {
-	rm -rf bin obj Tests/bin Tests/obj TestResults "$DIST_DIR"
-	ok "Removed bin/, obj/, Tests/bin/, Tests/obj/ and $DIST_DIR/"
+	rm -rf bin obj Tests/bin Tests/obj TestResults "$DIST_DIR" "$MATCH_DIR"
+	ok "Removed bin/, obj/, Tests/bin/, Tests/obj/, $DIST_DIR/ and $MATCH_DIR/"
+}
+
+# match OLD [NEW] — builds two versions of the bot and plays them against each other.
+# OLD and NEW are tags, commits or branches; NEW defaults to the working tree, uncommitted changes included.
+# Both sides start from the same random openings with each color (-repeat), so the result measures the engines, not the openings.
+cmd_match() {
+	require_dotnet
+	local old=${1:-} new=${2:-} runner
+	local games=${GAMES:-200} tc=${TC:-10+0.1}
+	local concurrency=$(( $(nproc 2>/dev/null || echo 2) / 2 ))
+	(( concurrency < 1 )) && concurrency=1
+
+	if [[ -z $old ]]; then
+		fail "Name the version to play against, e.g. make match OLD=v1.0"; exit 1
+	fi
+	if command -v fastchess >/dev/null; then runner=fastchess
+	elif command -v cutechess-cli >/dev/null; then runner=cutechess-cli
+	else
+		fail "Needs fastchess (https://github.com/Disservin/fastchess) or cutechess-cli (https://github.com/cutechess/cutechess) on PATH"
+		exit 1
+	fi
+
+	match_build "$old" old || exit 1
+	if [[ -n $new ]]; then
+		match_build "$new" new || exit 1
+	else
+		step "Building the working tree" "Built the working tree $DIM→ $MATCH_DIR/new/$RESET" \
+			dotnet build "$PROJECT" -c Release -nologo -o "$MATCH_DIR/new" || exit 1
+	fi
+
+	# Names come from the engines themselves (e.g. "Chess-Bot 1.2+3"), marked old and new in case they match
+	local old_name new_name
+	old_name="$(match_engine_name "$MATCH_DIR/old") (old)"
+	new_name="$(match_engine_name "$MATCH_DIR/new") (new)"
+	local pgn=$MATCH_DIR/games.pgn
+	rm -f "$pgn"
+
+	note "$new_name vs $old_name: $games games at $tc, $concurrency at a time, with $runner"
+	rule
+	local args=(
+		-engine "cmd=$MATCH_DIR/new/Chess-Bot" "name=$new_name"
+		-engine "cmd=$MATCH_DIR/old/Chess-Bot" "name=$old_name"
+	)
+	if [[ $runner == fastchess ]]; then
+		args+=(-each proto=uci args=--uci "tc=$tc" -pgnout "file=$pgn")
+	else
+		args+=(-each proto=uci arg=--uci "tc=$tc" -pgnout "$pgn")
+	fi
+	args+=(
+		-openings file=Resources/Openings/Match.epd format=epd order=random
+		-repeat -games 2 -rounds $(( (games + 1) / 2 )) -concurrency "$concurrency"
+	)
+	"$runner" "${args[@]}"
+	rule
+	ok "Games saved $DIM→ $pgn$RESET"
+}
+
+# match_build REF NAME — checks REF out in a temporary worktree and builds it into $MATCH_DIR/NAME.
+match_build() {
+	local ref=$1 out=$MATCH_DIR/$2 src=$MATCH_DIR/src-$2
+
+	if ! git rev-parse --verify --quiet "$ref^{commit}" >/dev/null; then
+		fail "No tag, commit or branch named '$ref'"; return 1
+	fi
+	# Older versions would open the game window instead of answering UCI commands
+	if ! git cat-file -e "$ref:Scripts/Framework/App/Core/Uci.cs" 2>/dev/null; then
+		fail "$ref has no UCI mode, so it can't play matches; versions from v1.0 on can"; return 1
+	fi
+
+	git worktree remove --force "$src" >/dev/null 2>&1
+	rm -rf "$src" "$out"
+	step "Checking out $ref" "Checked out $ref" git worktree add --detach --force "$src" "$ref" || return 1
+	step "Building $ref" "Built $ref $DIM→ $out/$RESET" dotnet build "$src/$PROJECT" -c Release -nologo -o "$out"
+	local status=$?
+	git worktree remove --force "$src" >/dev/null 2>&1
+	return "$status"
+}
+
+# match_engine_name DIR — the name the engine in DIR gives over UCI, e.g. "Chess-Bot 1.2".
+match_engine_name() {
+	printf 'uci\nquit\n' | "$1/Chess-Bot" --uci | sed -n 's/^id name //p'
 }
 
 case ${1:-help} in
-	help|install|build|run|publish|clean|test|perft|check|format) cmd=$1; shift; "cmd_$cmd" "$@" ;;
+	help|install|build|run|publish|clean|test|perft|check|format|match) cmd=$1; shift; "cmd_$cmd" "$@" ;;
 	*) fail "Unknown command '$1'"; printf '\n' >&2; cmd_help >&2; exit 1 ;;
 esac
