@@ -8,17 +8,14 @@ using System.Numerics;
 class Piece {
     public Coord Coord;
     public float X, Y;
-    private string imgURL = "Resources/Sprites/"; // Every piece image is stored in this directory
     private Texture2D texture; // Preloaded texture to avoid loading it every frame
 
     public Piece(API.Piece piece, Coord coord) {
         Coord = coord;
-        imgURL += UIHelper.GetImageNameByPiece(piece);
         X = UIHelper.GetScreenX(coord);
         Y = UIHelper.GetScreenY(coord);
 
-        texture = Raylib.LoadTexture(imgURL);
-        Raylib.SetTextureFilter(texture, TextureFilter.Bilinear); // To avoid resolution loss when scaling
+        texture = UIHelper.LoadPieceTexture(piece);
     }
 
     // When illegal move is played, piece goes to its original position

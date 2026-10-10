@@ -95,6 +95,23 @@ class UIHelper {
         return piece.IsWhite ? "White" : "Black";
     }
 
+    // Piece sprites are much larger than they are drawn, so they get mipmaps: plain bilinear filtering
+    // samples too few of the sprite's pixels when shrinking it that far, which leaves the pieces grainy
+    // Each sprite is loaded once and shared by every piece drawn with it
+    private static readonly Dictionary<string, Texture2D> pieceTextures = new();
+
+    public static Texture2D LoadPieceTexture(API.Piece piece) {
+        string path = "Resources/Sprites/" + GetImageNameByPiece(piece);
+        if (pieceTextures.TryGetValue(path, out Texture2D texture)) return texture;
+
+        texture = Raylib.LoadTexture(path);
+        Raylib.GenTextureMipmaps(ref texture);
+        Raylib.SetTextureFilter(texture, TextureFilter.Trilinear);
+
+        pieceTextures[path] = texture;
+        return texture;
+    }
+
     // Get an image url corresponding to the piece
     public static string GetImageNameByPiece(API.Piece piece) {
         return GetPieceColor(piece) + "/" + GetPieceName(piece) + ".png";

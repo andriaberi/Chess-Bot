@@ -54,9 +54,7 @@ class Material {
             foreach (int pieceType in order) {
                 foreach (bool white in new[] { true, false }) {
                     API.Piece piece = new API.Piece(pieceType, white ? API.Piece.White : API.Piece.Black);
-                    Texture2D texture = Raylib.LoadTexture("Resources/Sprites/" + UIHelper.GetImageNameByPiece(piece));
-                    Raylib.SetTextureFilter(texture, TextureFilter.Bilinear);
-                    icons[(pieceType, white)] = texture;
+                    icons[(pieceType, white)] = UIHelper.LoadPieceTexture(piece);
                 }
             }
         }
