@@ -11,6 +11,7 @@ Chess Bot is a C#-based chess engine capable of playing chess against a human or
 - [Architecture](#architecture)
 - [Setup Instructions](#setup-instructions)
 - [Testing Guide](#testing-guide)
+- [UCI and Comparing Versions](#uci-and-comparing-versions)
 - [Modifying the Codebase](#modifying-the-codebase)
 - [License](#license)
 - [Contact Information](#contact-information)
@@ -84,20 +85,49 @@ Run `make` on its own to see every command:
 | `make perft` | Run the perft tests and show nodes, time and speed per position and depth |
 | `make check` | Build everything and test (what CI runs) |
 | `make format` | Fix whitespace to match `.editorconfig` |
+| `make match` | Play two versions of the bot against each other (`OLD=v1.0`, optional `NEW=`, `GAMES=`, `TC=`) |
 
 Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 
 # Testing Guide
 
 * After running the program, a window will open with the board set up—human plays as White by default.
-* Drag and drop pieces to make your move.
-* The bot will respond automatically, typically within 2 seconds.
-* Monitor the timer to see the remaining time for each side.
-* The game status (win/draw) will be displayed on the left once the game ends.
-* Use the three buttons at the bottom-left corner to switch game modes: Play as White, Play as Black, or AI vs AI.
+* Drag and drop a piece, or click it and then click its square, to make your move.
+* Right-drag between squares to draw an arrow, or right-click a square to circle it; a left click clears them.
+* The bot will respond automatically, typically within 2 seconds. Its search, best move and evaluation show on the left.
+* **Hint** shows the bot's best move for you as an arrow; **Resign** ends the game after a second click.
+* The **Menu** starts a new game (Play White, Play Black, AI vs AI) and sets the bot's difficulty and the clock.
+  It can also save the game as PGN, copy the position as FEN, and flip the board.
 * To verify the engine, run the unit tests: `make test`
   * Tests live in the `Tests` folder and cover move generation (perft), the board, game rules, and the bot.
   * Every push and pull request runs the full suite on GitHub Actions.
+
+# UCI and Comparing Versions
+
+Started with `--uci`, the bot runs without a window as a [UCI](https://backscattering.de/chess/uci/) engine,
+so chess GUIs (Arena, Cute Chess, Banksia) and tournament runners can use it:
+
+```sh
+dotnet bin/Release/net8.0/Chess-Bot.dll --uci
+```
+
+It supports `uci`, `isready`, `setoption` (`Difficulty`, `OwnBook`), `ucinewgame`, `position`, `go`
+(`wtime`/`btime`/`winc`/`binc`, `movetime`, `depth`, `infinite`), `stop` and `quit`, and reports
+`info depth … score … nodes … nps … time … pv …` as it searches.
+
+Versions are git tags (`v1.0`, `v1.1`, …), and the engine reports its version as `Chess-Bot 1.1`
+(`1.1+3` three commits later). To see whether a change made the bot stronger, play it against an earlier version:
+
+```sh
+make match OLD=v1.0              # your working tree against v1.0
+make match OLD=v1.0 NEW=v1.1     # two tagged versions
+make match OLD=v1.0 GAMES=400 TC=5+0.05
+```
+
+This needs [fastchess](https://github.com/Disservin/fastchess) or
+[cutechess-cli](https://github.com/cutechess/cutechess) on your `PATH`. Both sides play the same random openings
+from `Resources/Openings/Match.epd`, once with each color, and the runner reports the score and Elo difference.
+Games are saved to `.match/games.pgn`.
 
 # Modifying the Codebase
 
