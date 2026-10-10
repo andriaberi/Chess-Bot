@@ -115,6 +115,56 @@ public class BoardTests {
     }
 
     [Fact]
+    public void ZobristKey_DependsOnCastlingRights() {
+        // Both kings walk out and back, so the pieces end where they started but castling is gone
+        Board board = new Board("");
+        ulong canCastle = board.ZobristKey;
+
+        Play(board, "e2e4", "e7e5", "e1e2", "e8e7", "e2e1", "e7e8");
+
+        Board sameWithoutKingMoves = new Board("");
+        Play(sameWithoutKingMoves, "e2e4", "e7e5");
+
+        Assert.NotEqual(canCastle, board.ZobristKey);
+        Assert.NotEqual(sameWithoutKingMoves.ZobristKey, board.ZobristKey);
+    }
+
+    [Fact]
+    public void ZobristKey_CountsEnPassantOnlyWhenACaptureIsPossible() {
+        // 1. e4 with no black pawn next to e4: the en passant square makes no difference
+        Board noCapture = new Board("");
+        Play(noCapture, "e2e4");
+        Assert.Equal(ZobristHashing.CalculateZobristKey(new Board("RNBQKBNR/PPPP1PPP/8/4P3/8/8/pppppppp/rnbqkbnr b KQkq - 0 1")), noCapture.ZobristKey);
+
+        // Black pawn on d4 can take e3 en passant, so the same pieces without the en passant square are a different position
+        Board capture = new Board("RNBQKBNR/PPPP1PPP/8/3pP3/8/8/ppp1pppp/rnbqkbnr b KQkq e3 0 1");
+        Board noEnPassant = new Board("RNBQKBNR/PPPP1PPP/8/3pP3/8/8/ppp1pppp/rnbqkbnr b KQkq - 0 1");
+        Assert.NotEqual(noEnPassant.ZobristKey, capture.ZobristKey);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20")]
+    [InlineData("R2Q1RK1/Pp1P2PP/q4N2/BBP1P3/nP6/1b3nbN/Pppp1ppp/r3k2r w kq - 0 1")]
+    public void IncrementalZobristKey_MatchesFullRecalculation(string fen) {
+        // Walks two plies of every line, which covers castling, en passant and rook captures
+        Board board = new Board(fen);
+
+        foreach (Move move in MoveGenerator.GenerateMoves(board)) {
+            board.MakeMove(move);
+            Assert.Equal(ZobristHashing.CalculateZobristKey(board), board.ZobristKey);
+
+            foreach (Move reply in MoveGenerator.GenerateMoves(board)) {
+                board.MakeMove(reply);
+                Assert.Equal(ZobristHashing.CalculateZobristKey(board), board.ZobristKey);
+                board.UnmakeMove(reply);
+            }
+
+            board.UnmakeMove(move);
+        }
+    }
+
+    [Fact]
     public void MovingPiecesBackAndForth_RepeatsThePosition() {
         Board board = new Board("");
 

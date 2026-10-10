@@ -38,7 +38,8 @@ class Board {
 
     public void MakeMove(Move move, bool record = false) {
         // Update the Zobrist key incrementally: XOR out the pieces that leave their squares, XOR in the ones that arrive
-        ulong key = ZobristKey ^ ZobristHashing.BlackToMoveKey;
+        // The castling and en passant state is XOR-ed out here and the new state back in after the move
+        ulong key = ZobristKey ^ ZobristHashing.BlackToMoveKey ^ ZobristHashing.StateKey(this);
         int captureSquare = move.IsEnPassant ? (IsWhiteTurn ? move.Target - 8 : move.Target + 8) : move.Target;
 
         key ^= ZobristHashing.PieceKey(Square[move.Source], move.Source);
@@ -55,6 +56,7 @@ class Board {
         if (IsWhiteTurn) MoveCount++;
 
         key ^= ZobristHashing.PieceKey(Square[move.Target], move.Target); // Handles promotions too
+        key ^= ZobristHashing.StateKey(this);
         ZobristKey = key;
         System.Diagnostics.Debug.Assert(ZobristKey == ZobristHashing.CalculateZobristKey(this));
         PastZobristKeys.Add(ZobristKey);

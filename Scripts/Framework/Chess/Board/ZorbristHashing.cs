@@ -12,7 +12,26 @@ class ZobristHashing {
         for (int i = 0; i < 64; i++) {
             key ^= PieceKey(board.Square[i], i);
         }
+        return key ^ StateKey(board);
+    }
+
+    // Key for the castling rights and the en passant file
+    // Positions with the same pieces but different rights are different positions, for repetition and for the transposition table
+    public static ulong StateKey(Board board) {
+        ulong key = castlingKeys[board.CastlingRights];
+        if (CanCaptureEnPassant(board)) key ^= enPassantFileKeys[BoardHelper.ColumnIndex(board.EnPassantSquare)];
         return key;
+    }
+
+    // An en passant square only changes the position if a pawn of the side to move stands next to the pawn that just moved
+    static bool CanCaptureEnPassant(Board board) {
+        if (board.EnPassantSquare == -1) return false;
+
+        int pushedPawn = board.EnPassantSquare + (board.IsWhiteTurn ? -8 : 8);
+        int file = BoardHelper.ColumnIndex(pushedPawn);
+        Bitboard capturers = board.Type[Piece.Pawn] & board.Color[board.IsWhiteTurn];
+
+        return (file > 0 && capturers.Contains(pushedPawn - 1)) || (file < 7 && capturers.Contains(pushedPawn + 1));
     }
 
     // Key for a single piece on a single square (0 for an empty square)
@@ -27,6 +46,8 @@ class ZobristHashing {
 
     private static readonly ulong[,] ZobristTable = new ulong[64, 12]; // 64 squares, 12 piece types (6 colors * 2 types)
     private static readonly ulong blackToMoveKey = 0x1UL; // Unique key for black to move
+    private static readonly ulong[] castlingKeys = new ulong[16]; // One per combination of the 4 castling rights
+    private static readonly ulong[] enPassantFileKeys = new ulong[8];
 
     static ZobristHashing() {
         Random random = new Random();
@@ -36,5 +57,7 @@ class ZobristHashing {
                 ZobristTable[i, j] = (ulong) random.NextInt64(long.MaxValue);
             }
         }
+        for (int i = 0; i < 16; i++) castlingKeys[i] = (ulong) random.NextInt64(long.MaxValue);
+        for (int i = 0; i < 8; i++) enPassantFileKeys[i] = (ulong) random.NextInt64(long.MaxValue);
     }
 }
