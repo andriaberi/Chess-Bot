@@ -13,6 +13,12 @@ class Position {
 
     private int promotionLastChecked = -1;
 
+    // A human promotion waits here until a piece is picked; -1 when no picker is open
+    private int promotionSource = -1;
+    private int promotionTarget = -1;
+    private List<Piece> promotionChoices = new List<Piece>();
+    private static readonly int[] promotionTypes = { API.Piece.Queen, API.Piece.Knight, API.Piece.Rook, API.Piece.Bishop };
+
     public Position(ChessEngine.Board board) {
         pieces = new List<Piece>();
         SetUpPosition(board);
@@ -29,6 +35,11 @@ class Position {
     }
 
     public void Update(ChessEngine.Board board, Board boardUI, bool highlightMoves, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
+        if (promotionTarget != -1) {
+            UpdatePromotionPicker(board, boardUI, highlightMoves, ref whiteTimerUI, ref blackTimerUI);
+            return;
+        }
+
         Move move = Move.NullMove;
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Left)) {
@@ -69,6 +80,15 @@ class Position {
                 // If the piece is not dragged or the square is not a valid move, ignore
                 if (draggedPiece == -1 || !boardUI.IsValidToMove(i)) continue;
 
+                // Promotion waits for the player to pick a piece, the pawn stays put until then
+                int source = pieces[draggedPiece].Coord.SquareIndex;
+                if (board.Square[source].IsPawn && (i < 8 || i > 55)) {
+                    OpenPromotionPicker(source, i, board.IsWhiteTurn);
+                    pieces[draggedPiece].ResetPosition();
+                    placedOnValidSquare = true;
+                    continue;
+                }
+
                 // If other piece was killed, remove it from the list
                 if (pieces.FindIndex(p => p.Coord == new Coord(i)) != -1) {
                     int index = pieces.FindIndex(p => p.Coord == new Coord(i));
@@ -106,13 +126,6 @@ class Position {
                 pieces[index].Coord = new Coord(rookTarget);
                 pieces[index].ResetPosition();
             }
-            // Promotion
-            if (board.Square[move.Source].IsPawn && (move.Target < 8 || move.Target > 55)) {
-                move = new Move(move.Source, move.Target, Move.QueenPromotion);
-
-                int index = pieces.FindIndex(p => p.Coord.SquareIndex == move.Target);
-                pieces[index] = new Piece(new API.Piece(API.Piece.Queen, board.IsWhiteTurn ? API.Piece.White : API.Piece.Black), new Coord(move.Target));
-            }
             // En passant
             if (board.Square[move.Source].IsPawn && Math.Abs(move.Source - move.Target) % 8 != 0 && board.Square[move.Target].IsNone) {
                 move = new Move(move.Source, move.Target, Move.EnPassant);
@@ -125,14 +138,76 @@ class Position {
 
             PlaySound(move, board);
             board.MakeMove(move, record: true);
-            if (board.IsWhiteTurn) {
-                whiteTimerUI.Start();
-                blackTimerUI.Stop();
-            } else {
-                blackTimerUI.Start();
-                whiteTimerUI.Stop();
-            }
+            SwitchTimers(board, ref whiteTimerUI, ref blackTimerUI);
         }
+    }
+
+    private static void SwitchTimers(ChessEngine.Board board, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
+        if (board.IsWhiteTurn) {
+            whiteTimerUI.Start();
+            blackTimerUI.Stop();
+        } else {
+            blackTimerUI.Start();
+            whiteTimerUI.Stop();
+        }
+    }
+
+    // The choices stack from the promotion square towards the middle of the board, queen first
+    private void OpenPromotionPicker(int source, int target, bool isWhite) {
+        promotionSource = source;
+        promotionTarget = target;
+        promotionChoices = new List<Piece>();
+
+        int direction = isWhite ? -8 : 8;
+        for (int i = 0; i < promotionTypes.Length; i++) {
+            API.Piece piece = new API.Piece(promotionTypes[i], isWhite ? API.Piece.White : API.Piece.Black);
+            promotionChoices.Add(new Piece(piece, new Coord(target + i * direction)));
+        }
+    }
+
+    private void ClosePromotionPicker() {
+        promotionSource = -1;
+        promotionTarget = -1;
+        promotionChoices = new List<Piece>();
+    }
+
+    // Left click on a choice promotes, a click anywhere else or a right click cancels the move
+    private void UpdatePromotionPicker(ChessEngine.Board board, Board boardUI, bool canMove, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
+        // The game ended (e.g. on time) while the picker was open
+        if (!canMove || Raylib.IsMouseButtonPressed(MouseButton.Right)) {
+            ClosePromotionPicker();
+            return;
+        }
+
+        if (!Raylib.IsMouseButtonPressed(MouseButton.Left)) return;
+
+        int choice = promotionChoices.FindIndex(piece => Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), new Rectangle(piece.X, piece.Y, Settings.SquareSideLength, Settings.SquareSideLength)));
+        if (choice == -1) {
+            ClosePromotionPicker();
+            return;
+        }
+
+        ushort flag = promotionTypes[choice] switch {
+            API.Piece.Queen => Move.QueenPromotion,
+            API.Piece.Knight => Move.KnightPromotion,
+            API.Piece.Rook => Move.RookPromotion,
+            _ => Move.BishopPromotion
+        };
+        Move move = new Move(promotionSource, promotionTarget, flag);
+
+        // Remove the captured piece and swap the pawn for the picked piece
+        int capturedIndex = pieces.FindIndex(p => p.Coord.SquareIndex == move.Target);
+        if (capturedIndex != -1) pieces.RemoveAt(capturedIndex);
+
+        int pawnIndex = pieces.FindIndex(p => p.Coord.SquareIndex == move.Source);
+        pieces[pawnIndex] = new Piece(new API.Piece(promotionTypes[choice], board.IsWhiteTurn ? API.Piece.White : API.Piece.Black), new Coord(move.Target));
+
+        ClosePromotionPicker();
+        boardUI.SetLastMove(move);
+
+        PlaySound(move, board);
+        board.MakeMove(move, record: true);
+        SwitchTimers(board, ref whiteTimerUI, ref blackTimerUI);
     }
 
     public void AnimateMove(Move move, ChessEngine.Board board) {
@@ -237,5 +312,23 @@ class Position {
 
         if (draggedPiece != -1) pieces[draggedPiece].Render();
         if (animatedPiece != -1) pieces[animatedPiece].Render();
+
+        if (promotionTarget != -1) RenderPromotionPicker();
+    }
+
+    // Dims the board and draws the choices on top of it
+    private void RenderPromotionPicker() {
+        int boardX = Math.Min(UIHelper.GetScreenX(0), UIHelper.GetScreenX(7));
+        int boardY = Math.Min(UIHelper.GetScreenY(0), UIHelper.GetScreenY(7));
+        Raylib.DrawRectangle(boardX, boardY, 8 * Settings.SquareSideLength, 8 * Settings.SquareSideLength, Theme.PromotionOverlayCol);
+
+        Vector2 mouse = Raylib.GetMousePosition();
+        foreach (Piece choice in promotionChoices) {
+            Rectangle rect = new Rectangle(choice.X, choice.Y, Settings.SquareSideLength, Settings.SquareSideLength);
+            bool hovered = Raylib.CheckCollisionPointRec(mouse, rect);
+
+            Raylib.DrawRectangleRec(rect, hovered ? Theme.PromotionHoverCol : Theme.PromotionChoiceCol);
+            choice.Render();
+        }
     }
 }
