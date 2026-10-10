@@ -126,8 +126,9 @@ make match OLD=v1.0 GAMES=400 TC=5+0.05
 
 This needs [fastchess](https://github.com/Disservin/fastchess) or
 [cutechess-cli](https://github.com/cutechess/cutechess) on your `PATH`. Both sides play the same random openings
-from `Resources/Openings/Match.epd`, once with each color, and the runner reports the score and Elo difference.
-Games are saved to `.match/games.pgn`.
+from `Resources/Openings/Match.epd`, once with each color. At the end, `make match` says in plain words whether
+the new version is stronger, weaker or not clearly different yet, and by about how many Elo, e.g.
+`New version is stronger by about 35 Elo (somewhere between 15 and 55)`. Games are saved to `.match/games.pgn`.
 
 # Modifying the Codebase
 

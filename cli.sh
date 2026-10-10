@@ -365,9 +365,43 @@ cmd_match() {
 		-openings file=Resources/Openings/Match.epd format=epd order=random
 		-repeat -games 2 -rounds $(( (games + 1) / 2 )) -concurrency "$concurrency"
 	)
-	"$runner" "${args[@]}"
+	local log=$MATCH_DIR/match.log
+	"$runner" "${args[@]}" | tee "$log"
 	rule
 	ok "Games saved $DIM→ $pgn$RESET"
+	match_verdict "$log" "$games"
+}
+
+# match_verdict LOG GAMES — the final result in plain words: whether the new version is stronger, weaker,
+# or not clearly different yet, and by how much. The range is the runner's 95% confidence interval.
+match_verdict() {
+	local log=$1 games=$2 elo margin verdict
+
+	# The runner reprints results as it goes, so the last line counts
+	# fastchess: "Elo: 70.44 +/- 154.21, nElo: ..."    cutechess-cli: "Elo difference: 70.4 +/- 154.2, LOS: ..."
+	read -r elo margin < <(sed -nE 's/^Elo( difference)?: *([-+0-9.a-z]+) *\+\/- *([-+0-9.a-z]+).*/\2 \3/p' "$log" | tail -n 1)
+	if [[ -z $elo ]]; then
+		note "No result to judge; the match may have been stopped before any game finished"
+		return 0
+	fi
+
+	verdict=$(awk -v elo="$elo" -v margin="$margin" -v games="$games" 'BEGIN {
+		if (elo ~ /^-inf/) { print "weaker|New version lost every game: far weaker, too big a gap to put a number on"; exit }
+		if (elo ~ /^inf/)  { print "stronger|New version won every game: far stronger, too big a gap to put a number on"; exit }
+		low = elo - margin; high = elo + margin
+		if (low > 0)
+			printf "stronger|New version is stronger by about %d Elo (somewhere between %d and %d)\n", elo, low, high
+		else if (high < 0)
+			printf "weaker|New version is weaker by about %d Elo (somewhere between %d and %d)\n", -elo, -high, -low
+		else
+			printf "unclear|No clear difference yet (somewhere between %+d and %+d Elo). Play more games: GAMES=%d\n", low, high, games * 4
+	}')
+
+	case ${verdict%%|*} in
+		stronger) ok "${BOLD}${verdict#*|}${RESET}" ;;
+		weaker)   fail "${BOLD}${verdict#*|}${RESET}" ;;
+		*)        note "${BOLD}${verdict#*|}${RESET}" ;;
+	esac
 }
 
 # match_build REF NAME — checks REF out in a temporary worktree and builds it into $MATCH_DIR/NAME.
