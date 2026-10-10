@@ -29,6 +29,19 @@ public class BotTests {
     }
 
     [Fact]
+    public void CancelledSearch_StopsEarlyAndLeavesTheBoardUnchanged() {
+        Board board = new Board("");
+        string before = Snapshot(board);
+        using var cancel = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        Chess.Bot.Bot.Think(board, Clock, cancel.Token);
+
+        Assert.True(stopwatch.Elapsed < TimeSpan.FromMilliseconds(500), $"Search ran for {stopwatch.Elapsed.TotalMilliseconds} ms after being cancelled");
+        Assert.Equal(before, Snapshot(board));
+    }
+
+    [Fact]
     public void Search_LeavesTheBoardUnchanged() {
         Board board = new Board("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20");
         string before = Snapshot(board);

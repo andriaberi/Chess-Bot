@@ -21,28 +21,33 @@ class Bot {
     };
 
     static double timeLimitSeconds;
-    static bool searchCancelled = false;
+    static CancellationToken searchToken;
+    static bool searchCancelled => searchToken.IsCancellationRequested;
+    static long nodes;
+
+    // Stats of the latest search, replaced after every completed iteration so the UI can show them live
+    public static volatile SearchInfo? LastSearch;
 
     public static Move currentBestMove = Move.NullMove;
     public static Move overallBestMove = Move.NullMove;
 
-    // Entry point: searches for best move within a time budget
-    public static Move Think(Board board, double timeLeft) {
+    // Entry point: searches for best move within a time budget, or until the caller cancels it
+    public static Move Think(Board board, double timeLeft, CancellationToken cancel = default) {
         overallBestMove = Move.NullMove;
-        searchCancelled = false;
+        nodes = 0;
         timeLimitSeconds = GetThinkTime(board, timeLeft);
 
-        // Starts a background thread that cancels the search after time limit
-        var timerThread = new Thread(() => {
-            Thread.Sleep((int) (timeLimitSeconds * 1000));
-            searchCancelled = true;
-        }) {
-            IsBackground = true
-        };
-        timerThread.Start();
+        // Each search gets its own timer, so a timer left over from an earlier search cannot cut this one short
+        using var searchTimer = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+        searchTimer.CancelAfter(TimeSpan.FromSeconds(timeLimitSeconds));
+        searchToken = searchTimer.Token;
 
         int depthSearched = 0, eval = 0;
         TranspositionTable.Clear();
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        SearchInfo info = new SearchInfo(Move.NullMove, 0, 0, 0, 0, 0, timeLimitSeconds, DateTime.Now, Thinking: true);
+        LastSearch = info;
 
         // Iterative deepening loop
         for (int depth = 1; depth <= int.MaxValue; depth++) {
@@ -55,14 +60,23 @@ class Bot {
             if (!currentBestMove.IsNull) {
                 overallBestMove = currentBestMove;
             }
+
+            // A cancelled iteration returns a meaningless score, so only completed ones are reported
+            if (!searchCancelled) {
+                int whiteEval = board.IsWhiteTurn ? eval : -eval;
+                info = info with { Move = overallBestMove, Eval = whiteEval, MateIn = MateIn(whiteEval, depth), Depth = depth, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds };
+                LastSearch = info;
+            }
         }
 
+        LastSearch = info with { Move = overallBestMove, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds, Thinking = false };
         return overallBestMove;
     }
 
     // Main minimax search with alpha-beta pruning
     public static int Search(Board board, int depth, int alpha = negativeInfinity, int beta = positiveInfinity, bool firstCall = true) {
         if (searchCancelled) return 0;
+        nodes++;
 
         if (board.CountZobristKeys(board.ZobristKey) >= 3) return 0; // Threefold repetition draw
 
@@ -119,9 +133,20 @@ class Bot {
         return alpha;
     }
 
+    // Mate scores are checkmate - remaining depth, so the ply of the mate follows from the root depth.
+    // Returns moves until mate, signed like the eval, or 0 when no mate was found
+    static int MateIn(int eval, int rootDepth) {
+        int remainingDepth = Math.Abs(eval) + checkmate;
+        if (remainingDepth < 0 || remainingDepth > rootDepth) return 0;
+
+        int movesToMate = (rootDepth - remainingDepth + 1) / 2;
+        return eval > 0 ? movesToMate : -movesToMate;
+    }
+
     // Quiescence search to avoid horizon effect on captures
     public static int QuiescenceSearch(Board board, int alpha, int beta) {
         if (searchCancelled) return 0;
+        nodes++;
 
         if (board.CountZobristKeys(board.ZobristKey) >= 3) return 0; // Threefold repetition draw
 
@@ -210,3 +235,6 @@ class Bot {
         return thinkTime;
     }
 }
+
+// Eval is in centipawns and MateIn in moves, both from white's point of view. MateIn is 0 when no mate was found
+record SearchInfo(Move Move, int Eval, int MateIn, int Depth, long Nodes, double Seconds, double TimeLimit, DateTime StartedAt, bool Thinking = false, bool FromBook = false);

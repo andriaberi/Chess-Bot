@@ -4,18 +4,19 @@ using Chess.API;
 
 class MoveUtility {
     // What MakeMove overwrites, so UnmakeMove can restore it; one entry per move made
-    readonly record struct UndoState(Piece KilledPiece, int CastlingRights, int HalfMoveClock);
+    readonly record struct UndoState(Piece KilledPiece, int CastlingRights, int EnPassantSquare, int HalfMoveClock);
     static List<UndoState> history = new List<UndoState>();
 
 
     public static void MakeMove(Board board, Move move) {
-        if (!board.Square[move.Source].IsNone || board.Square[move.Source].Type == Piece.Pawn) {
+        history.Add(new UndoState(board.Square[move.Target], board.CastlingRights, board.EnPassantSquare, board.HalfMoveClock));
+
+        // Captures and pawn moves reset the 50-move counter
+        if (!board.Square[move.Target].IsNone || board.Square[move.Source].Type == Piece.Pawn) {
             board.HalfMoveClock = 0;
         } else {
             board.HalfMoveClock++;
         }
-
-        history.Add(new UndoState(board.Square[move.Target], board.CastlingRights, board.HalfMoveClock));
 
         board.EnPassantSquare = -1;
 
@@ -140,8 +141,6 @@ class MoveUtility {
     }
 
     public static void UnmakeMove(Board board, Move move) {
-        board.EnPassantSquare = -1;
-
         // Restore source piece bitboard
         board.Type[board.Square[move.Target].Type].ClearBit(move.Target);
         board.Type[board.Square[move.Target].Type].SetBit(move.Source);
@@ -162,9 +161,6 @@ class MoveUtility {
 
             // Restore square array
             board.Square[target] = new Piece(board.IsWhiteTurn ? Piece.Black : Piece.White, Piece.Pawn);
-
-            // Update en passant square
-            board.EnPassantSquare = move.Target;
         }
 
         // Undo castling
@@ -215,8 +211,9 @@ class MoveUtility {
         board.Square[move.Source] = board.Square[move.Target];
         board.Square[move.Target] = undo.KilledPiece;
 
-        // Restore castling rights
+        // Restore castling rights and en passant square
         board.CastlingRights = undo.CastlingRights;
+        board.EnPassantSquare = undo.EnPassantSquare;
 
         // Update halfmove clock
         board.HalfMoveClock = undo.HalfMoveClock;

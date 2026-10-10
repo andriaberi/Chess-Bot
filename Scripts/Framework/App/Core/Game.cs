@@ -21,6 +21,8 @@ class Game {
     private Player player;
     private Status gameStatus;
     private Menu buttons;
+    private BotInfo botInfo;
+    private EvalBar evalBar;
 
     private OpeningBook openingBook;
 
@@ -56,6 +58,9 @@ class Game {
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
         gameStatus = new Status("");
         buttons = new Menu();
+        botInfo = new BotInfo();
+        evalBar = new EvalBar();
+        Bot.LastSearch = null;
 
         if (!File.Exists("Resources/Openings/Books.bin")) {
             OpeningBook.GenerateBinaryOpeningBook("Resources/Openings/Books.txt", "Resources/Openings/Books.bin");
@@ -122,7 +127,11 @@ class Game {
             if (token.IsCancellationRequested) return;
 
             Move move = openingBook.GetMove(chessBoard.MovesMade);
-            if (move.IsNull) move = currentPlayer.Search(chessBoard, chessBoard.IsWhiteTurn ? whiteTimer.Time : blackTimer.Time); // You can pass the token here if supported
+            if (move.IsNull) move = currentPlayer.Search(chessBoard, chessBoard.IsWhiteTurn ? whiteTimer.Time : blackTimer.Time, token);
+            else Bot.LastSearch = new SearchInfo(move, 0, 0, 0, 0, 0, 0, DateTime.Now, FromBook: true);
+
+            // A cancelled search returns whatever it had so far, which must not be played
+            if (token.IsCancellationRequested) return;
 
             animationTokenSource = new CancellationTokenSource();
             var animToken = animationTokenSource.Token;
@@ -161,16 +170,24 @@ class Game {
         statusCheck = true;
     }
 
-    public void HandleButtonPress(int buttonUpdate) {
-        // Cancel any running bot/animation tasks
-        botTokenSource.Cancel();
-        animationTokenSource.Cancel();
-
+    // A task cancelled before it started throws on Wait, which is fine here
+    private static void WaitIgnoringCancellation(Task task) {
         try {
-            Task.WaitAll(new[] { BotTask, AnimationTask }, 200); // Wait briefly (optional)
+            task.Wait();
         } catch (AggregateException) {
             // Ignore task cancellations
         }
+    }
+
+    public void HandleButtonPress(int buttonUpdate) {
+        // Stop the bot and any animation, and wait until they have finished:
+        // the engine keeps static state, so an old search must not overlap the next game
+        // The bot goes first, because it may start an animation right before it stops
+        botTokenSource.Cancel();
+        WaitIgnoringCancellation(BotTask);
+
+        animationTokenSource.Cancel();
+        WaitIgnoringCancellation(AnimationTask);
 
         // Reinitialize players based on button selection
         switch (buttonUpdate) {
@@ -209,6 +226,9 @@ class Game {
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
         gameStatus = new Status("");
         buttons = new Menu();
+        botInfo = new BotInfo();
+        evalBar = new EvalBar();
+        Bot.LastSearch = null;
 
         openingBook = new OpeningBook();
 
@@ -224,6 +244,8 @@ class Game {
 
     public void Render() {
         buttons.Render();
+        botInfo.Render();
+        evalBar.Render();
         board.Render();
         coord.Render();
         position.Render();

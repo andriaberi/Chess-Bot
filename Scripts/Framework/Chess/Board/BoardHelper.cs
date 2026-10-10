@@ -26,8 +26,9 @@ class BoardHelper {
         return columnIndex * 8 + rowIndex;
     }
 
+    // Coord's RowIndex is the rank, while rowIndex here is the file, so the two are swapped
     public static int IndexFromCoord(Coord coord) {
-        return IndexFromCoord(coord.RowIndex, coord.ColumnIndex);
+        return IndexFromCoord(coord.ColumnIndex, coord.RowIndex);
     }
 
     public static Coord CoordFromIndex(int squareIndex) {
@@ -51,7 +52,7 @@ class BoardHelper {
     }
 
     public static string SquareNameFromCoordinate(Coord coord) {
-        return SquareNameFromCoordinate(coord.RowIndex, coord.ColumnIndex);
+        return SquareNameFromCoordinate(coord.ColumnIndex, coord.RowIndex);
     }
 
     public static int SquareIndexFromName(string name) {
