@@ -2,33 +2,44 @@ namespace Chess.UI;
 
 using Chess.Utility;
 using Raylib_cs;
-using System.Numerics;
 
 public class Status {
-    // This is to display the game status on the screen
-    // Possible values are "Checkmate", "Stalemate", "Draw", "Time Out"
-    private string text;
-    private Color color = Color.White;
+    // Card in the left column, between the bot panel and the menu, announcing how the game ended
+    // The title gives the result ("White Wins", "Draw") and the caption under it the reason ("Checkmate", "Repetition", ...)
+    private readonly string caption;
+    private readonly string title;
+    private readonly Color color;
 
-    private Font font;
-    private const int fontSize = 60;
+    private const int Width = UIHelper.LeftColumnWidth;
+    private const int Padding = 20;
+    private const int AccentHeight = 4;
+    private const int TitleFontSize = 48;
+    private const int CaptionFontSize = 30;
+    private const int Height = AccentHeight + Padding + TitleFontSize + CaptionFontSize + Padding;
 
-    public Status(string text) {
-        this.text = text;
-        this.font = UIHelper.LoadFont(fontSize);
-    }
+    private static Font titleFont = UIHelper.LoadFont(TitleFontSize);
+    private static Font captionFont = UIHelper.LoadFont(CaptionFontSize);
 
-    public Status(string text, Color color) {
-        this.text = text;
+    public static readonly Status None = new Status("", "", Color.White);
+
+    public Status(string caption, string title, Color color) {
+        this.caption = caption;
+        this.title = title;
         this.color = color;
-        this.font = UIHelper.LoadFont(fontSize);
     }
 
     public void Render() {
-        Vector2 textSize = Raylib.MeasureTextEx(font, this.text, fontSize, 1);
-        int x = (Settings.ScreenWidth / 2 - 4 * Settings.SquareSideLength - Settings.BorderSize) / 2 - (int) textSize.X / 2;
-        int y = Settings.ScreenHeight / 2 - fontSize / 2;
+        if (title == "") return;
 
-        Raylib.DrawTextEx(font, this.text, new Vector2(x, y), fontSize, 1, color);
+        int x = UIHelper.LeftColumnX;
+        int y = (BotInfo.Bottom + Menu.Top) / 2 - Height / 2;
+        float centerX = x + Width / 2f;
+
+        Raylib.DrawRectangle(x, y, Width, Height, Theme.ButtonColor);
+        Raylib.DrawRectangle(x, y, Width, AccentHeight, color);
+
+        int contentY = y + AccentHeight + Padding;
+        UIHelper.DrawTextCentered(titleFont, title, centerX, contentY, TitleFontSize, Theme.ButtonHoverTextColor);
+        UIHelper.DrawTextCentered(captionFont, caption, centerX, contentY + TitleFontSize, CaptionFontSize, color);
     }
 }

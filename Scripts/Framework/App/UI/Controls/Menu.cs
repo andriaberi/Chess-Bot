@@ -6,14 +6,16 @@ using Chess.Utility;
 
 class Menu {
     private List<Button> buttons = new();
-    private int width = 250;
-    private int height = 55;
-    private int margin = 20;
+    private int width = UIHelper.LeftColumnWidth;
+    private const int height = 55;
+    private const int margin = 20;
+    private static readonly string[] buttonTexts = { "Play as White", "Play as Black", "AI vs AI", "Exit" };
+
+    // Top edge of the topmost button
+    public static int Top => UIHelper.BoardBottom - Settings.BorderSize - buttonTexts.Length * (height + margin) + margin;
 
     public Menu() {
-        string[] buttonTexts = { "Play as White", "Play as Black", "AI vs AI", "Exit" };
-
-        int posX = (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - width / 2;
+        int posX = UIHelper.LeftColumnX;
         int posY = Settings.ScreenHeight / 2 + 4 * Settings.SquareSideLength - height;
 
         for (int i = buttonTexts.Length - 1; i >= 0; i--) {

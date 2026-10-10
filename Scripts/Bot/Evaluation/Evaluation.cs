@@ -32,8 +32,22 @@ class Evaluation {
         eval += CalculateBonus(board, true) - CalculateBonus(board, false);
         eval += MoveUpEvaluation(board, true) - MoveUpEvaluation(board, false);
 
+        // Being ahead is worth nothing to a side that can't force mate, e.g. K+B vs K or K+B vs K+N
+        if (eval > 0 && !CanForceMate(board, true)) eval = 0;
+        if (eval < 0 && !CanForceMate(board, false)) eval = 0;
+
         // Since we are evaluating the board from the white's perspective, we need to negate the value if it's black
         return eval * (board.IsWhiteTurn ? 1 : -1);
+    }
+
+    // Without pawns, rooks or queens a side needs two minor pieces, and two knights alone can't force mate either
+    private static bool CanForceMate(Board board, bool isWhite) {
+        Bitboard pieces = board.Color[isWhite];
+        if (!(pieces & (board.Type[Piece.Pawn] | board.Type[Piece.Rook] | board.Type[Piece.Queen])).IsEmpty) return true;
+
+        int knights = (pieces & board.Type[Piece.Knight]).Count();
+        int bishops = (pieces & board.Type[Piece.Bishop]).Count();
+        return bishops >= 2 || (bishops >= 1 && knights >= 1);
     }
 
     private static int CalculateMaterial(Board board, bool isWhite, bool pawns = true) {

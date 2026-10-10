@@ -7,14 +7,18 @@ using Raylib_cs;
 using System.Numerics;
 
 class BotInfo {
-    // Panel on the right of the board showing the stats of the bot's latest search
-    private const int Width = 320;
+    // Panel at the top of the left column showing the stats of the bot's latest search
+    private const int Width = UIHelper.LeftColumnWidth;
     private const int Padding = 22;
     private const int ProgressHeight = 4;
-    private const int CaptionFontSize = 32;
+    private const int CaptionFontSize = 30;
     private const int MoveFontSize = 56;
     private const int FontSize = 34;
     private const int RowHeight = 46;
+    private const int RowCount = 4;
+
+    private const int Height = ProgressHeight + Padding + CaptionFontSize + MoveFontSize + Padding + 2 + Padding / 2 + RowCount * RowHeight + Padding / 2;
+    public static int Bottom => UIHelper.BoardTop + Height;
 
     private static Font captionFont = UIHelper.LoadFont(CaptionFontSize);
     private static Font moveFont = UIHelper.LoadFont(MoveFontSize);
@@ -34,13 +38,11 @@ class BotInfo {
             ("Time", searched ? $"{seconds:0.00}s" : "-"),
         };
 
-        int height = ProgressHeight + Padding + CaptionFontSize + MoveFontSize + Padding + 2 + Padding / 2 + rows.Length * RowHeight + Padding / 2;
+        // Aligned to the board's top edge, like the menu below it is aligned to the bottom edge
+        int x = UIHelper.LeftColumnX;
+        int y = UIHelper.BoardTop;
 
-        // Mirrors the menu on the left: centered in the margin, aligned to the board's top edge instead of its bottom
-        int x = Settings.ScreenWidth - (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - Width / 2;
-        int y = Settings.ScreenHeight / 2 - 4 * Settings.SquareSideLength - Settings.BorderSize;
-
-        Raylib.DrawRectangle(x, y, Width, height, Theme.DeskBackCol);
+        Raylib.DrawRectangle(x, y, Width, Height, Theme.ButtonColor);
 
         // Think time used so far, out of the time the bot gave itself for this move
         if (info != null && info.Thinking && info.TimeLimit > 0) {
@@ -49,16 +51,17 @@ class BotInfo {
         }
 
         int contentY = y + ProgressHeight + Padding;
-        Raylib.DrawTextEx(captionFont, "Best Move", new Vector2(x + Padding, contentY), CaptionFontSize, 1, Theme.ButtonTextColor);
+        string caption = info != null && info.FromBook ? "Book Move" : "Best Move";
+        Raylib.DrawTextEx(captionFont, caption, new Vector2(x + Padding, contentY), CaptionFontSize, 1, Theme.ButtonTextColor);
         contentY += CaptionFontSize;
 
         string move = info == null || info.Move.IsNull ? "-" : FormatMove(info.Move);
         string eval = searched && info!.Depth > 0 ? FormatEval(info) : "";
         Raylib.DrawTextEx(moveFont, move, new Vector2(x + Padding, contentY), MoveFontSize, 1, Theme.ButtonHoverTextColor);
-        DrawRightAligned(moveFont, eval, x + Width - Padding, contentY, MoveFontSize, Theme.PlayerTextColor);
+        DrawRightAligned(moveFont, eval, x + Width - Padding, contentY, MoveFontSize, Theme.ButtonTextColor);
         contentY += MoveFontSize + Padding;
 
-        Raylib.DrawRectangle(x + Padding, contentY, Width - Padding * 2, 2, Theme.ButtonColor);
+        Raylib.DrawRectangle(x + Padding, contentY, Width - Padding * 2, 2, Theme.ButtonTextColor);
         contentY += 2 + Padding / 2;
 
         int rowY = contentY + (RowHeight - FontSize) / 2;

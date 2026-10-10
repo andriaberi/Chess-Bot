@@ -3,6 +3,7 @@ namespace Chess.UI;
 using Chess.API;
 using Chess.Utility;
 using Raylib_cs;
+using System.Numerics;
 
 class UIHelper {
     // Finding square's x position on screen by its column index
@@ -15,12 +16,25 @@ class UIHelper {
         return Settings.ScreenHeight / 2 - (Settings.FromWhitesView ? (rowIndex - 3) : (4 - rowIndex)) * Settings.SquareSideLength;
     }
 
+    // The column left of the board holds the bot panel at the top, the game result in the middle and the menu at the bottom
+    public const int LeftColumnWidth = 320;
+    public static int LeftColumnX => (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - LeftColumnWidth / 2;
+
+    // Top and bottom edges of the board's frame
+    public static int BoardTop => Settings.ScreenHeight / 2 - 4 * Settings.SquareSideLength - Settings.BorderSize;
+    public static int BoardBottom => Settings.ScreenHeight / 2 + 4 * Settings.SquareSideLength + Settings.BorderSize;
+
     public static int GetScreenX(Coord coord) => GetScreenX(coord.ColumnIndex);
     public static int GetScreenY(Coord coord) => GetScreenY(coord.RowIndex);
 
     public static Font LoadFont(int fontSize) {
         string fontPath = "Resources/Fonts/Nunito-Medium.ttf";
         return Raylib.LoadFontEx(fontPath, fontSize, null, 0);
+    }
+
+    public static void DrawTextCentered(Font font, string text, float centerX, float y, int fontSize, Color color) {
+        Vector2 size = Raylib.MeasureTextEx(font, text, fontSize, 1);
+        Raylib.DrawTextEx(font, text, new Vector2(centerX - size.X / 2, y), fontSize, 1, color);
     }
 
     public static string GetPieceName(API.Piece piece) {
