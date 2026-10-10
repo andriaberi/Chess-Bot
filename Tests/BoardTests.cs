@@ -35,6 +35,7 @@ public class BoardTests {
     [InlineData("")]
     [InlineData("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20")]
     [InlineData("8/4P1P1/8/1R3p1k/KP5r/3p4/2p5/8 w - - 0 40")]
+    [InlineData("RNBQKBNR/PPPP1PPP/8/4P3/8/8/pppppppp/rnbqkbnr b KQkq e3 0 1")]
     [InlineData("R2Q1RK1/Pp1P2PP/q4N2/BBP1P3/nP6/1b3nbN/Pppp1ppp/r3k2r w kq - 0 1")]
     public void MakeThenUnmake_RestoresTheBoard(string fen) {
         Board board = new Board(fen);
@@ -46,6 +47,19 @@ public class BoardTests {
 
             Assert.Equal(before, Snapshot(board));
         }
+    }
+
+    [Fact]
+    public void UnmakeMove_RestoresEnPassantSquare() {
+        Board board = new Board("");
+        Play(board, "e2e4");
+        int enPassantSquare = board.EnPassantSquare;
+
+        var move = FindMove(board, "a7a6");
+        board.MakeMove(move);
+        board.UnmakeMove(move);
+
+        Assert.Equal(enPassantSquare, board.EnPassantSquare);
     }
 
     [Fact]
