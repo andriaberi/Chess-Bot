@@ -28,9 +28,6 @@ class Theme {
     // Player Labels
     public static Color PlayerTextColor = new Color(190, 230, 235, 255);
 
-    // Black pieces shown by the player names: the white sprite in gray, since black ones vanish on the dark background
-    public static Color CapturedBlackTint = new Color(120, 120, 120, 255);
-
     // Game Status
     public static Color CheckmateTextColor = new Color(200, 63, 73, 255);
     public static Color StalemateTextColor = new Color(73, 151, 208, 255);

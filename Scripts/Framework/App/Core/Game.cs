@@ -385,7 +385,7 @@ class Game {
         position.Render();
         annotations.Render();
         RenderHint();
-        player.Render(chessBoard);
+        player.Render();
         gameStatus.Render();
         whiteTimer.Render();
         blackTimer.Render();
