@@ -35,7 +35,7 @@ class MoveHistory {
         Raylib.DrawTextEx(captionFont, "Moves", new Vector2(x + Padding, contentY), CaptionFontSize, 1, Theme.ButtonTextColor);
         contentY += CaptionFontSize + Padding;
 
-        Raylib.DrawRectangle(x + Padding, contentY, Width - Padding * 2, 2, Theme.ButtonHoverColor);
+        Raylib.DrawRectangle(x + Padding, contentY, Width - Padding * 2, 1, Theme.ButtonTextColor);
         contentY += 2 + Padding / 2;
 
         // Plies are counted from the start of the game, so a position set up with black to move starts with "1..."

@@ -17,6 +17,9 @@ class Theme {
     public static Color SelectedLight = new Color(221, 208, 124, 255);
     public static Color SelectedDark = new Color(197, 158, 94, 255);
 
+    // Arrows and circles drawn with the right mouse button, in lichess's green
+    public static Color AnnotationCol = new Color(21, 120, 27, 170);
+
     // Promotion picker
     public static Color PromotionOverlayCol = new Color(20, 20, 20, 150);
     public static Color PromotionChoiceCol = new Color(238, 216, 192, 255);

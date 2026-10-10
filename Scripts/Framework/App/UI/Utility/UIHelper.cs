@@ -43,6 +43,39 @@ class UIHelper {
         return Raylib.LoadFontEx(fontPath, fontSize, null, 0);
     }
 
+    // Index of the square under the mouse, or -1 when the mouse is off the board
+    public static int SquareUnderMouse() {
+        Vector2 mouse = Raylib.GetMousePosition();
+        for (int i = 0; i < 64; i++) {
+            Rectangle rect = new Rectangle(GetScreenX(i % 8), GetScreenY(i / 8), Settings.SquareSideLength, Settings.SquareSideLength);
+            if (Raylib.CheckCollisionPointRec(mouse, rect)) return i;
+        }
+        return -1;
+    }
+
+    public static Vector2 SquareCenter(int square) {
+        Coord coord = new Coord(square);
+        return new Vector2(GetScreenX(coord) + Settings.SquareSideLength / 2f, GetScreenY(coord) + Settings.SquareSideLength / 2f);
+    }
+
+    // A straight arrow between the centers of two squares, its head ending at the target's center
+    public static void DrawArrow(int fromSquare, int toSquare, Color color) {
+        const float headLength = 40, headWidth = 30, thickness = 16;
+
+        Vector2 from = SquareCenter(fromSquare);
+        Vector2 to = SquareCenter(toSquare);
+        Vector2 direction = Vector2.Normalize(to - from);
+        Vector2 side = new Vector2(-direction.Y, direction.X);
+
+        Vector2 headBase = to - direction * headLength;
+        Raylib.DrawLineEx(from, headBase, thickness, color);
+
+        // Raylib only fills triangles given counter-clockwise, so both windings are drawn and one is skipped
+        Vector2 left = headBase + side * headWidth, right = headBase - side * headWidth;
+        Raylib.DrawTriangle(to, left, right, color);
+        Raylib.DrawTriangle(to, right, left, color);
+    }
+
     public static void DrawTextCentered(Font font, string text, float centerX, float y, int fontSize, Color color) {
         Vector2 size = Raylib.MeasureTextEx(font, text, fontSize, 1);
         Raylib.DrawTextEx(font, text, new Vector2(centerX - size.X / 2, y), fontSize, 1, color);
@@ -60,6 +93,23 @@ class UIHelper {
 
     public static string GetPieceColor(API.Piece piece) {
         return piece.IsWhite ? "White" : "Black";
+    }
+
+    // Piece sprites are much larger than they are drawn, so they get mipmaps: plain bilinear filtering
+    // samples too few of the sprite's pixels when shrinking it that far, which leaves the pieces grainy
+    // Each sprite is loaded once and shared by every piece drawn with it
+    private static readonly Dictionary<string, Texture2D> pieceTextures = new();
+
+    public static Texture2D LoadPieceTexture(API.Piece piece) {
+        string path = "Resources/Sprites/" + GetImageNameByPiece(piece);
+        if (pieceTextures.TryGetValue(path, out Texture2D texture)) return texture;
+
+        texture = Raylib.LoadTexture(path);
+        Raylib.GenTextureMipmaps(ref texture);
+        Raylib.SetTextureFilter(texture, TextureFilter.Trilinear);
+
+        pieceTextures[path] = texture;
+        return texture;
     }
 
     // Get an image url corresponding to the piece

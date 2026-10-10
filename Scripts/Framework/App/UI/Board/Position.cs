@@ -21,6 +21,8 @@ class Position {
     private List<Piece> promotionChoices = new List<Piece>();
     private static readonly int[] promotionTypes = { API.Piece.Queen, API.Piece.Knight, API.Piece.Rook, API.Piece.Bishop };
 
+    public bool PromotionPickerOpen => promotionTarget != -1;
+
     public Position(ChessEngine.Board board) {
         pieces = new List<Piece>();
         SetUpPosition(board);
@@ -46,7 +48,7 @@ class Position {
         if (!highlightMoves && selectedSquare != -1) Deselect(boardUI);
 
         if (Raylib.IsMouseButtonPressed(MouseButton.Left)) {
-            int square = SquareUnderMouse();
+            int square = UIHelper.SquareUnderMouse();
 
             // With a piece selected, clicking one of its highlighted squares plays the move
             if (selectedSquare != -1 && square != -1 && boardUI.IsValidToMove(square)) {
@@ -80,7 +82,7 @@ class Position {
 
         if (Raylib.IsMouseButtonReleased(MouseButton.Left) && draggedPiece != -1) {
             int source = pieces[draggedPiece].Coord.SquareIndex;
-            int square = SquareUnderMouse();
+            int square = UIHelper.SquareUnderMouse();
 
             pieces[draggedPiece].ResetPosition();
             draggedPiece = -1;
@@ -108,16 +110,6 @@ class Position {
     private void Deselect(Board boardUI) {
         selectedSquare = -1;
         boardUI.Clear();
-    }
-
-    // Index of the square under the mouse, or -1 when the mouse is off the board
-    private static int SquareUnderMouse() {
-        Vector2 mouse = Raylib.GetMousePosition();
-        for (int i = 0; i < 64; i++) {
-            Rectangle rect = new Rectangle(UIHelper.GetScreenX(i % 8), UIHelper.GetScreenY(i / 8), Settings.SquareSideLength, Settings.SquareSideLength);
-            if (Raylib.CheckCollisionPointRec(mouse, rect)) return i;
-        }
-        return -1;
     }
 
     // Plays the human's move, whether dragged or clicked; the target must be highlighted as legal
