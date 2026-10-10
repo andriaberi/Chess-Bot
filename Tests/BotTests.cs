@@ -40,7 +40,7 @@ public class BotTests {
         Assert.Equal(-1, Chess.Bot.Bot.LastSearch!.MateIn);
 
         // Rook ladder: 1. Ra7 Kg8 2. Rb8#, with no mate in one
-        board = new Board("R3K3/1R6/8/8/8/8/8/7k w - - 0 1");
+        board = new Board("7k/8/8/8/8/8/1R6/R3K3 w - - 0 1");
         Chess.Bot.Bot.Think(board, Clock);
         Assert.Equal(2, Chess.Bot.Bot.LastSearch!.MateIn);
     }
@@ -56,16 +56,16 @@ public class BotTests {
     }
 
     [Theory]
-    [InlineData("2B1K3/8/8/8/8/7n/8/4k3 w - - 0 1")] // K+B vs K+N
-    [InlineData("4K3/8/2B5/8/8/8/8/4k3 w - - 0 1")]  // K+B vs K
-    [InlineData("4K3/8/2NN4/8/8/8/8/4k3 b - - 0 1")] // K+N+N vs K
+    [InlineData("4k3/8/7n/8/8/8/8/2B1K3 w - - 0 1")] // K+B vs K+N
+    [InlineData("4k3/8/8/8/8/2B5/8/4K3 w - - 0 1")]  // K+B vs K
+    [InlineData("4k3/8/8/8/8/2NN4/8/4K3 b - - 0 1")] // K+N+N vs K
     public void Evaluate_IsLevelWhenNeitherSideCanForceMate(string fen) {
         Assert.Equal(0, Chess.Bot.Evaluation.Evaluate(new Board(fen)));
     }
 
     [Fact]
     public void Evaluate_FavorsBishopAndKnightAgainstABareKing() {
-        Assert.True(Chess.Bot.Evaluation.Evaluate(new Board("4K3/8/2BN4/8/8/8/8/4k3 w - - 0 1")) > 0);
+        Assert.True(Chess.Bot.Evaluation.Evaluate(new Board("4k3/8/8/8/8/2BN4/8/4K3 w - - 0 1")) > 0);
     }
 
     [Fact]
@@ -93,7 +93,7 @@ public class BotTests {
 
     [Fact]
     public void Search_LeavesTheBoardUnchanged() {
-        Board board = new Board("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20");
+        Board board = new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 20");
         string before = Snapshot(board);
 
         Move move = Chess.Bot.Bot.Think(board, Clock);

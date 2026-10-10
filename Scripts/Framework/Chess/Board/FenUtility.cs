@@ -16,8 +16,7 @@ class FenUtility {
     // 4. En passant target square in algebraic notation. If there is no en passant target square, a hyphen (-) is used.
     // 5. Halfmove clock: The number of halfmoves since the last pawn advance or capture.
     // 6. Fullmove number: The number of the full move. It starts at 1, and is incremented after black
-    public static string startingFen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr w KQkq - 0 1"; // Default starting position
-    public const string StandardStartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // The same, as ToFen writes it
+    public const string StandardStartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Default starting position
 
     private static Dictionary<char, int> PieceByChar = new() {
         { 'p', Piece.Pawn },
@@ -29,14 +28,18 @@ class FenUtility {
     };
 
     public static void LoadFen(string fen, Board board) {
-        if (string.IsNullOrEmpty(fen)) fen = startingFen;
-        string[] parts = fen.Split(' ');
+        if (string.IsNullOrEmpty(fen)) fen = StandardStartFen;
+        string[] parts = fen.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        int squareIndex = 0;
+        // Ranks are listed from 8 down to 1, and square indices count up from a1, so each rank starts 8 squares lower
+        int squareIndex = 56;
 
         // Parse piece placement
         foreach (char c in parts[0]) {
-            if (c == '/') continue;
+            if (c == '/') {
+                squareIndex -= 16;
+                continue;
+            }
             if (char.IsDigit(c)) {
                 int emptySquares = c - '0';
                 for (int i = 0; i < emptySquares; i++) {
@@ -66,9 +69,10 @@ class FenUtility {
 
         if (parts[3] != "-") board.EnPassantSquare = BoardHelper.SquareIndexFromName(parts[3]);
 
-        board.HalfMoveClock = int.Parse(parts[4]);
+        // EPD positions, as tournament openings files use, leave out the two move counters
+        board.HalfMoveClock = parts.Length > 4 ? int.Parse(parts[4]) : 0;
 
-        board.MoveCount = int.Parse(parts[5]);
+        board.MoveCount = parts.Length > 5 ? int.Parse(parts[5]) : 1;
     }
 
     // Writes the position as standard FEN (rank 8 first), the way other chess programs and sites read it

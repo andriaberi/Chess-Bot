@@ -7,7 +7,6 @@ namespace Chess.Tests;
 using Chess.API;
 using Chess.ChessEngine;
 
-// Note: FEN strings in this project list rank 1 first (the reverse of standard FEN)
 static class TestHelpers {
     public static int Square(string name) => BoardHelper.SquareIndexFromName(name);
 
