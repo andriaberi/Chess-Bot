@@ -42,6 +42,9 @@ class Bot {
     // Stats of the latest search, replaced after every completed iteration so the UI can show them live
     public static volatile SearchInfo? LastSearch;
 
+    // Called after every completed iteration, on the searching thread; the UCI mode reports each one as an info line
+    public static Action<SearchInfo>? IterationCompleted;
+
     public static Move currentBestMove = Move.NullMove;
     public static Move overallBestMove = Move.NullMove;
 
@@ -87,8 +90,12 @@ class Bot {
             // A cancelled iteration returns a meaningless score, so only completed ones are reported
             if (!searchCancelled) {
                 int whiteEval = board.IsWhiteTurn ? eval : -eval;
-                info = info with { Move = overallBestMove, Eval = whiteEval, MateIn = MateIn(whiteEval), Depth = depth, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds };
+                info = info with {
+                    Move = overallBestMove, Eval = whiteEval, MateIn = MateIn(whiteEval), Depth = depth, Nodes = nodes,
+                    Seconds = stopwatch.Elapsed.TotalSeconds, Line = PrincipalVariation(board, overallBestMove, depth)
+                };
                 LastSearch = info;
+                IterationCompleted?.Invoke(info);
             }
         }
 
@@ -96,6 +103,25 @@ class Bot {
 
         LastSearch = info with { Move = overallBestMove, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds, Thinking = false };
         return overallBestMove;
+    }
+
+    // The line the search expects: the best move, then the best reply stored in the transposition table for each position after it
+    // Stops at a move that isn't legal (the entry may belong to another position) or at a repeated position
+    static List<Move> PrincipalVariation(Board board, Move first, int maxLength) {
+        var line = new List<Move>();
+        var seen = new HashSet<ulong>();
+
+        Move move = first;
+        while (!move.IsNull && line.Count < maxLength && seen.Add(board.ZobristKey)) {
+            if (!MoveGenerator.GenerateMoves(board).Contains(move)) break;
+
+            board.MakeMove(move);
+            line.Add(move);
+            move = TranspositionTable.TryProbe(board.ZobristKey, out HashEntry entry) ? entry.move : Move.NullMove;
+        }
+
+        for (int i = line.Count - 1; i >= 0; i--) board.UnmakeMove(line[i]);
+        return line;
     }
 
     // Scores every move with random noise added, so weaker levels sometimes play a slightly worse move
@@ -286,4 +312,4 @@ class Bot {
 }
 
 // Eval is in centipawns and MateIn in moves, both from white's point of view. MateIn is 0 when no mate was found
-record SearchInfo(Move Move, int Eval, int MateIn, int Depth, long Nodes, double Seconds, double TimeLimit, DateTime StartedAt, bool Thinking = false, bool FromBook = false);
+record SearchInfo(Move Move, int Eval, int MateIn, int Depth, long Nodes, double Seconds, double TimeLimit, DateTime StartedAt, bool Thinking = false, bool FromBook = false, List<Move>? Line = null);

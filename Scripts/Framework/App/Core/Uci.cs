@@ -137,13 +137,28 @@ class Uci {
         Board position = board;
 
         search = Task.Run(() => {
+            Bot.IterationCompleted = info => Send(InfoLine(info, position.IsWhiteTurn));
+
             Move move = ownBook && position.StartFen == FenUtility.StandardStartFen ? Book().GetMove(position.MovesMade) : Move.NullMove;
             if (move.IsNull) move = Bot.Think(position, timeLeft, token, level, increment, thinkTime, depth);
 
             // Stopped before the first depth finished: any legal move beats answering with none
             if (move.IsNull) move = MoveGenerator.GenerateMoves(position).FirstOrDefault(Move.NullMove);
+            Bot.IterationCompleted = null;
             Send($"bestmove {Notation.ToUci(move)}");
         });
+    }
+
+    // e.g. "info depth 7 score cp 25 nodes 1500000 nps 1800000 time 830 pv g1f3 b8c6"
+    // UCI scores are from the side to move, the bot's from white; mate is given in moves, negative when getting mated
+    private static string InfoLine(SearchInfo info, bool whiteToMove) {
+        int sign = whiteToMove ? 1 : -1;
+        string score = info.MateIn != 0 ? $"mate {info.MateIn * sign}" : $"cp {info.Eval * sign}";
+
+        long nps = info.Seconds > 0 ? (long) (info.Nodes / info.Seconds) : 0;
+        string line = string.Join(' ', (info.Line ?? new List<Move>()).Select(Notation.ToUci));
+
+        return $"info depth {info.Depth} score {score} nodes {info.Nodes} nps {nps} time {(long) (info.Seconds * 1000)} pv {line}".TrimEnd();
     }
 
     private OpeningBook Book() {

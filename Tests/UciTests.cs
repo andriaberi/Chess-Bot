@@ -34,6 +34,25 @@ public class UciTests {
     }
 
     [Fact]
+    public void ReportsEachDepthBeforeTheMove() {
+        string[] lines = Run("position startpos moves f2f3 e7e5 g2g4", "go depth 3");
+
+        string[] infos = lines.Where(line => line.StartsWith("info ")).ToArray();
+        Assert.Equal(3, infos.Length);
+        Assert.StartsWith("info depth 1 ", infos[0]);
+        Assert.Contains("score mate 1", infos[^1]); // Black to move mates in one
+        Assert.EndsWith("pv d8h4", infos[^1]);
+        Assert.Equal("bestmove d8h4", lines[^1]);
+    }
+
+    [Fact]
+    public void ScoresFromTheSideToMove() {
+        // Black is a rook down
+        string[] lines = Run("position fen 6k1/5ppp/8/8/8/8/5PPP/R5K1 b - - 0 1", "go depth 2");
+        Assert.Matches(@"score cp -\d+", lines.Last(line => line.StartsWith("info ")));
+    }
+
+    [Fact]
     public void FindsAMoveOnTheClock() {
         string[] lines = Run("position startpos moves e2e4", "go wtime 1000 btime 1000 winc 10 binc 10");
         Assert.Matches("^bestmove [a-h][1-8][a-h][1-8]$", lines[^1]);
