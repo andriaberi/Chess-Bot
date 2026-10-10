@@ -21,7 +21,8 @@ class Bot {
     };
 
     static double timeLimitSeconds;
-    static bool searchCancelled = false;
+    static CancellationToken searchToken;
+    static bool searchCancelled => searchToken.IsCancellationRequested;
     static long nodes;
 
     // Stats of the latest search, replaced after every completed iteration so the UI can show them live
@@ -30,21 +31,16 @@ class Bot {
     public static Move currentBestMove = Move.NullMove;
     public static Move overallBestMove = Move.NullMove;
 
-    // Entry point: searches for best move within a time budget
-    public static Move Think(Board board, double timeLeft) {
+    // Entry point: searches for best move within a time budget, or until the caller cancels it
+    public static Move Think(Board board, double timeLeft, CancellationToken cancel = default) {
         overallBestMove = Move.NullMove;
-        searchCancelled = false;
         nodes = 0;
         timeLimitSeconds = GetThinkTime(board, timeLeft);
 
-        // Starts a background thread that cancels the search after time limit
-        var timerThread = new Thread(() => {
-            Thread.Sleep((int) (timeLimitSeconds * 1000));
-            searchCancelled = true;
-        }) {
-            IsBackground = true
-        };
-        timerThread.Start();
+        // Each search gets its own timer, so a timer left over from an earlier search cannot cut this one short
+        using var searchTimer = CancellationTokenSource.CreateLinkedTokenSource(cancel);
+        searchTimer.CancelAfter(TimeSpan.FromSeconds(timeLimitSeconds));
+        searchToken = searchTimer.Token;
 
         int depthSearched = 0, eval = 0;
         TranspositionTable.Clear();

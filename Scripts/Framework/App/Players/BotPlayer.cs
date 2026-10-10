@@ -7,7 +7,7 @@ using Chess.ChessEngine;
 class BotPlayer : Player {
     public BotPlayer(bool isWhite) : base(isWhite, false) { }
 
-    public override Move Search(Board board, double timeRemaining) {
-        return Bot.Think(board, timeRemaining);
+    public override Move Search(Board board, double timeRemaining, CancellationToken cancel) {
+        return Bot.Think(board, timeRemaining, cancel);
     }
 }
