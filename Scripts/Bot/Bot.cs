@@ -101,18 +101,27 @@ class Bot {
 
         if (noise > 0 && !searchCancelled) overallBestMove = NoisyBestMove(board, depthSearched, noise);
 
+        // The move played can come from a depth cut short by the clock, or from the noise of a weaker level,
+        // so the line last reported is brought in line with it; its score is still the last completed depth's
+        if (!overallBestMove.IsNull && overallBestMove != info.Move) {
+            info = info with { Move = overallBestMove, Line = PrincipalVariation(board, overallBestMove, Math.Max(1, info.Depth)) };
+            IterationCompleted?.Invoke(info);
+        }
+
         LastSearch = info with { Move = overallBestMove, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds, Thinking = false };
         return overallBestMove;
     }
 
     // The line the search expects: the best move, then the best reply stored in the transposition table for each position after it
-    // Stops at a move that isn't legal (the entry may belong to another position) or at a repeated position
+    // Stops at a move that isn't legal (the entry may belong to another position), at a position the line already passed,
+    // and where the game would be drawn (fifty-move rule, threefold repetition), since nothing can be played after that
     static List<Move> PrincipalVariation(Board board, Move first, int maxLength) {
         var line = new List<Move>();
         var seen = new HashSet<ulong>();
 
         Move move = first;
         while (!move.IsNull && line.Count < maxLength && seen.Add(board.ZobristKey)) {
+            if (line.Count > 0 && (board.HalfMoveClock >= 100 || board.CountZobristKeys(board.ZobristKey) >= 3)) break;
             if (!MoveGenerator.GenerateMoves(board).Contains(move)) break;
 
             board.MakeMove(move);
