@@ -10,11 +10,15 @@ class Button {
     public bool IsHovered;
     public float HoverLerp;
 
-    private static int fontSize = 42;
-    private static Font font = UIHelper.LoadFont(fontSize);
+    // Fonts are shared between buttons of the same text size
+    private static readonly Dictionary<int, Font> fonts = new();
+    private readonly int fontSize;
+    private readonly Font font;
 
-    public Button(string text, int x, int y, int width, int height) {
+    public Button(string text, int x, int y, int width, int height, int fontSize = 42) {
         Text = text;
+        this.fontSize = fontSize;
+        if (!fonts.TryGetValue(fontSize, out font)) fonts[fontSize] = font = UIHelper.LoadFont(fontSize);
         IsHovered = false;
         HoverLerp = 0f;
         Bounds = new Rectangle(x, y, width, height);

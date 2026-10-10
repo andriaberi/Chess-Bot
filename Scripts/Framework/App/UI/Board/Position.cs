@@ -98,6 +98,13 @@ class Position {
         }
     }
 
+    // Moves every piece to its square after the board was turned around
+    public void Flip(Board boardUI) {
+        foreach (Piece piece in pieces) piece.ResetPosition();
+        foreach (Piece choice in promotionChoices) choice.ResetPosition();
+        Deselect(boardUI);
+    }
+
     private void Deselect(Board boardUI) {
         selectedSquare = -1;
         boardUI.Clear();

@@ -4,7 +4,7 @@ using Chess.Utility;
 using Raylib_cs;
 
 public class Status {
-    // Card in the left column, between the bot panel and the menu, announcing how the game ended
+    // Card in the left column, under the bot panel, announcing how the game ended
     // The title gives the result ("White Wins", "Draw") and the caption under it the reason ("Checkmate", "Repetition", ...)
     private readonly string caption;
     private readonly string title;
@@ -32,7 +32,7 @@ public class Status {
         if (title == "") return;
 
         int x = UIHelper.LeftColumnX;
-        int y = (BotInfo.Bottom + Menu.Top) / 2 - Height / 2;
+        int y = BotInfo.Bottom + UIHelper.ColumnGap;
         float centerX = x + Width / 2f;
 
         Raylib.DrawRectangle(x, y, Width, Height, Theme.ButtonColor);

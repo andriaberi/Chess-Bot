@@ -14,37 +14,23 @@ class Player {
     }
 
     private static int fontSize = 48;
-    private static int offset = 10;
 
     private Font font = UIHelper.LoadFont(fontSize);
     private Color fontColor = Theme.PlayerTextColor;
 
-    private void RenderWhite() {
-        int spaceBetween = Settings.ScreenHeight / 2 - (Settings.SquareSideLength * 4 + Settings.BorderSize);
+    // Each name sits by its own side of the board, centered in the gap between the board's frame and the window edge
+    private void RenderName(string text, bool isWhite) {
+        bool isOnTop = isWhite != Settings.FromWhitesView;
+        int centerY = isOnTop ? UIHelper.TopBarCenterY : UIHelper.BottomBarCenterY;
 
-        int x, y;
+        int x = UIHelper.GetScreenX(Settings.FromWhitesView ? 0 : 7);
+        Vector2 size = Raylib.MeasureTextEx(font, text, fontSize, 1);
 
-        x = UIHelper.GetScreenX(Settings.FromWhitesView ? 0 : 7);
-        if (Settings.FromWhitesView) y = spaceBetween + Settings.SquareSideLength * 8 + Settings.BorderSize * 2 + offset;
-        else y = spaceBetween - offset - fontSize;
-
-        Raylib.DrawTextEx(font, $"White: {whitePlayer}", new Vector2(x, y), fontSize, 1, fontColor);
-    }
-
-    private void RenderBlack() {
-        int spaceBetween = Settings.ScreenHeight / 2 - (Settings.SquareSideLength * 4 + Settings.BorderSize);
-
-        int x, y;
-
-        x = UIHelper.GetScreenX(Settings.FromWhitesView ? 0 : 7);
-        if (Settings.FromWhitesView) y = spaceBetween - offset + 5 - fontSize;
-        else y = spaceBetween + Settings.SquareSideLength * 8 + Settings.BorderSize * 2 + offset;
-
-        Raylib.DrawTextEx(font, $"Black: {blackPlayer}", new Vector2(x, y), fontSize, 1, fontColor);
+        Raylib.DrawTextEx(font, text, new Vector2(x, centerY - size.Y / 2), fontSize, 1, fontColor);
     }
 
     public void Render() {
-        RenderWhite();
-        RenderBlack();
+        RenderName($"White: {whitePlayer}", true);
+        RenderName($"Black: {blackPlayer}", false);
     }
 }

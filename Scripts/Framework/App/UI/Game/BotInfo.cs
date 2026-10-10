@@ -7,7 +7,7 @@ using Raylib_cs;
 using System.Numerics;
 
 class BotInfo {
-    // Panel at the top of the left column showing the stats of the bot's latest search
+    // Panel in the left column, under the menu button, showing the stats of the bot's latest search
     private const int Width = UIHelper.LeftColumnWidth;
     private const int Padding = 22;
     private const int ProgressHeight = 4;
@@ -18,7 +18,8 @@ class BotInfo {
     private const int RowCount = 4;
 
     private const int Height = ProgressHeight + Padding + CaptionFontSize + MoveFontSize + Padding + 2 + Padding / 2 + RowCount * RowHeight + Padding / 2;
-    public static int Bottom => UIHelper.BoardTop + Height;
+    public static int Top => Menu.Bottom + UIHelper.ColumnGap;
+    public static int Bottom => Top + Height;
 
     private static Font captionFont = UIHelper.LoadFont(CaptionFontSize);
     private static Font moveFont = UIHelper.LoadFont(MoveFontSize);
@@ -38,9 +39,8 @@ class BotInfo {
             ("Time", searched ? $"{seconds:0.00}s" : "-"),
         };
 
-        // Aligned to the board's top edge, like the menu below it is aligned to the bottom edge
         int x = UIHelper.LeftColumnX;
-        int y = UIHelper.BoardTop;
+        int y = Top;
 
         Raylib.DrawRectangle(x, y, Width, Height, Theme.ButtonColor);
 

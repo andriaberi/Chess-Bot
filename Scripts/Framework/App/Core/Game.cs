@@ -20,7 +20,7 @@ class Game {
     private Position position;
     private Player player;
     private Status gameStatus;
-    private Menu buttons;
+    private Menu menu;
     private BotInfo botInfo;
     private EvalBar evalBar;
     private MoveHistory moveHistory;
@@ -31,6 +31,7 @@ class Game {
 
     private bool statusCheck = true;
     private bool gameOver = false;
+    private string result = "*"; // For the saved game: "1-0", "0-1", "1/2-1/2", or "*" while in progress
 
     private Task BotTask;
     private Task AnimationTask;
@@ -44,8 +45,8 @@ class Game {
 
         Settings.FromWhitesView = fromWhitesView;
 
-        whiteTimer = new Timer(Settings.TimeLimit, !fromWhitesView);
-        blackTimer = new Timer(Settings.TimeLimit, fromWhitesView);
+        whiteTimer = new Timer(Settings.TimeLimit, true);
+        blackTimer = new Timer(Settings.TimeLimit, false);
 
         chessBoard = new ChessEngine.Board(fen);
 
@@ -57,7 +58,7 @@ class Game {
         position = new Position(chessBoard);
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
         gameStatus = Status.None;
-        buttons = new Menu();
+        menu = new Menu();
         botInfo = new BotInfo();
         evalBar = new EvalBar();
         moveHistory = new MoveHistory();
@@ -105,28 +106,74 @@ class Game {
             blackTimer.Stop();
         }
 
-        position.Update(chessBoard, board, highlightMoves: statusCheck && !gameOver, ref whiteTimer, ref blackTimer);
+        // While the menu is open, and on the click that closes it, the board ignores the mouse
+        bool menuWasOpen = menu.IsOpen;
+        MenuAction action = menu.Update();
+        if (!menuWasOpen && !menu.IsOpen) {
+            position.Update(chessBoard, board, highlightMoves: statusCheck && !gameOver, ref whiteTimer, ref blackTimer);
+        }
         position.AnimatePromotion(chessBoard);
 
         whiteTimer.Update();
         blackTimer.Update();
 
-        int buttonUpdate = buttons.Update();
-        if (buttonUpdate != -1) {
-            HandleButtonPress(buttonUpdate);
+        if (action != MenuAction.None) HandleMenuAction(action);
+    }
+
+    private void HandleMenuAction(MenuAction action) {
+        switch (action) {
+            case MenuAction.PlayAsWhite:
+                StartNewGame(new App.HumanPlayer(true), new App.BotPlayer(false), fromWhitesView: true);
+                break;
+            case MenuAction.PlayAsBlack:
+                StartNewGame(new App.BotPlayer(true), new App.HumanPlayer(false), fromWhitesView: false);
+                break;
+            case MenuAction.AiVsAi:
+                StartNewGame(new App.BotPlayer(true), new App.BotPlayer(false), fromWhitesView: true);
+                break;
+            case MenuAction.SaveGame:
+                menu.ShowMessage($"Saved to {SaveGame()}");
+                break;
+            case MenuAction.CopyFen:
+                Raylib.SetClipboardText(chessBoard.Fen);
+                menu.ShowMessage("FEN copied to the clipboard");
+                break;
+            case MenuAction.FlipBoard:
+                Settings.FromWhitesView = !Settings.FromWhitesView;
+                position.Flip(board);
+                menu.Close();
+                break;
+            case MenuAction.Exit:
+                Environment.Exit(0);
+                break;
         }
+    }
+
+    // Writes the game as PGN to a new text file in the Games folder, and returns its path
+    private string SaveGame() {
+        Directory.CreateDirectory("Games");
+        string path = Path.Combine("Games", $"game_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.txt");
+
+        string Name(App.Player player) => player.IsBot ? $"Bot ({Bot.Level})" : "Human";
+        File.WriteAllText(path, Pgn.Write(chessBoard, Name(whitePlayer), Name(blackPlayer), result));
+
+        return path;
     }
 
     private Status GameOverStatus(string status) {
         switch (status) {
             case "Checkmate":
                 // The side to move is the one that got mated
+                result = chessBoard.IsWhiteTurn ? "0-1" : "1-0";
                 return new Status("Checkmate", chessBoard.IsWhiteTurn ? "Black Wins" : "White Wins", Theme.CheckmateTextColor);
             case "Time Out":
+                result = whiteTimer.Time == 0 ? "0-1" : "1-0";
                 return new Status("Out of time", whiteTimer.Time == 0 ? "Black Wins" : "White Wins", Theme.CheckmateTextColor);
             case "Stalemate":
+                result = "1/2-1/2";
                 return new Status("Stalemate", "Draw", Theme.StalemateTextColor);
             default:
+                result = "1/2-1/2";
                 return new Status(Arbiter.DrawReason(chessBoard, whiteTimer.Time, blackTimer.Time), "Draw", Theme.DrawTextColor);
         }
     }
@@ -188,7 +235,7 @@ class Game {
         }
     }
 
-    public void HandleButtonPress(int buttonUpdate) {
+    private void StartNewGame(App.Player white, App.Player black, bool fromWhitesView) {
         // Stop the bot and any animation, and wait until they have finished:
         // the engine keeps static state, so an old search must not overlap the next game
         // The bot goes first, because it may start an animation right before it stops
@@ -198,31 +245,14 @@ class Game {
         animationTokenSource.Cancel();
         WaitIgnoringCancellation(AnimationTask);
 
-        // Reinitialize players based on button selection
-        switch (buttonUpdate) {
-            case 0:
-                whitePlayer = new App.HumanPlayer(true);
-                blackPlayer = new App.BotPlayer(false);
-                Settings.FromWhitesView = true;
-                break;
-            case 1:
-                whitePlayer = new App.BotPlayer(true);
-                blackPlayer = new App.HumanPlayer(false);
-                Settings.FromWhitesView = false;
-                break;
-            case 2:
-                whitePlayer = new App.BotPlayer(true);
-                blackPlayer = new App.BotPlayer(false);
-                Settings.FromWhitesView = true;
-                break;
-            case 3:
-                Environment.Exit(0);
-                break;
-        }
+        whitePlayer = white;
+        blackPlayer = black;
+        Settings.FromWhitesView = fromWhitesView;
+        menu.Close();
 
         // Reset game state
-        whiteTimer = new Timer(Settings.TimeLimit, !Settings.FromWhitesView);
-        blackTimer = new Timer(Settings.TimeLimit, Settings.FromWhitesView);
+        whiteTimer = new Timer(Settings.TimeLimit, true);
+        blackTimer = new Timer(Settings.TimeLimit, false);
 
         chessBoard = new ChessEngine.Board("");
 
@@ -234,7 +264,6 @@ class Game {
         position = new Position(chessBoard);
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
         gameStatus = Status.None;
-        buttons = new Menu();
         botInfo = new BotInfo();
         evalBar = new EvalBar();
         moveHistory = new MoveHistory();
@@ -249,10 +278,11 @@ class Game {
 
         statusCheck = true;
         gameOver = false;
+        result = "*";
     }
 
     public void Render() {
-        buttons.Render();
+        menu.Render();
         botInfo.Render();
         evalBar.Render();
         moveHistory.Render(chessBoard);
@@ -263,5 +293,6 @@ class Game {
         gameStatus.Render();
         whiteTimer.Render();
         blackTimer.Render();
+        menu.RenderPopup();
     }
 }
