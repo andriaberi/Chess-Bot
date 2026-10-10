@@ -9,6 +9,7 @@ class Bot {
     const int positiveInfinity = 1000000000;
     const int negativeInfinity = -1000000000;
     const int checkmate = -1000000;
+    const int maxMatePly = 1000; // Scores within this many plies of checkmate are mate scores
 
     // Piece values used for move ordering (not evaluation)
     static readonly Dictionary<int, int> PieceValue = new() {
@@ -64,7 +65,7 @@ class Bot {
             // A cancelled iteration returns a meaningless score, so only completed ones are reported
             if (!searchCancelled) {
                 int whiteEval = board.IsWhiteTurn ? eval : -eval;
-                info = info with { Move = overallBestMove, Eval = whiteEval, MateIn = MateIn(whiteEval, depth), Depth = depth, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds };
+                info = info with { Move = overallBestMove, Eval = whiteEval, MateIn = MateIn(whiteEval), Depth = depth, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds };
                 LastSearch = info;
             }
         }
@@ -73,8 +74,9 @@ class Bot {
         return overallBestMove;
     }
 
-    // Main minimax search with alpha-beta pruning
-    public static int Search(Board board, int depth, int alpha = negativeInfinity, int beta = positiveInfinity, bool firstCall = true) {
+    // Main minimax search with alpha-beta pruning; ply is the distance from the root
+    public static int Search(Board board, int depth, int alpha = negativeInfinity, int beta = positiveInfinity, int ply = 0) {
+        bool firstCall = ply == 0;
         if (searchCancelled) return 0;
         nodes++;
 
@@ -83,7 +85,7 @@ class Bot {
         int hashF = HashFlag.ALPHA;
 
         // Probe transposition table for prior result
-        int? val = TranspositionTable.ProbeHash(board, depth, alpha, beta);
+        int? val = TranspositionTable.ProbeHash(board, depth, alpha, beta, ply);
         if (val.HasValue) {
             if (firstCall) {
                 Move move = TranspositionTable.GetEntry(board.ZobristKey).move;
@@ -99,7 +101,7 @@ class Bot {
 
         if (moves.Count == 0) {
             if (MoveHelper.IsInCheck(board, board.IsWhiteTurn)) {
-                return checkmate - depth; // Mate found
+                return checkmate + ply; // Mate found, a quicker mate scores further from zero
             }
             return 0; // Stalemate
         }
@@ -108,14 +110,14 @@ class Bot {
 
         foreach (Move move in moves) {
             board.MakeMove(move);
-            int eval = -Search(board, depth - 1, -beta, -alpha, false);
+            int eval = -Search(board, depth - 1, -beta, -alpha, ply + 1);
             board.UnmakeMove(move);
 
             if (searchCancelled) return 0;
 
             if (eval >= beta) {
                 // Move too good, opponent will not allow it
-                TranspositionTable.RecordHash(board, depth, beta, HashFlag.BETA, move);
+                TranspositionTable.RecordHash(board, depth, beta, HashFlag.BETA, move, ply);
                 return beta;
             }
 
@@ -129,17 +131,19 @@ class Bot {
             }
         }
 
-        TranspositionTable.RecordHash(board, depth, alpha, hashF, bestMoveThisPosition);
+        TranspositionTable.RecordHash(board, depth, alpha, hashF, bestMoveThisPosition, ply);
         return alpha;
     }
 
-    // Mate scores are checkmate - remaining depth, so the ply of the mate follows from the root depth.
-    // Returns moves until mate, signed like the eval, or 0 when no mate was found
-    static int MateIn(int eval, int rootDepth) {
-        int remainingDepth = Math.Abs(eval) + checkmate;
-        if (remainingDepth < 0 || remainingDepth > rootDepth) return 0;
+    public static bool IsMateScore(int eval) => Math.Abs(eval) > -checkmate - maxMatePly;
 
-        int movesToMate = (rootDepth - remainingDepth + 1) / 2;
+    // Mate scores are checkmate + the ply of the mate, counted from the root.
+    // Returns moves until mate, signed like the eval, or 0 when no mate was found
+    static int MateIn(int eval) {
+        if (!IsMateScore(eval)) return 0;
+
+        int matePly = -checkmate - Math.Abs(eval);
+        int movesToMate = (matePly + 1) / 2;
         return eval > 0 ? movesToMate : -movesToMate;
     }
 

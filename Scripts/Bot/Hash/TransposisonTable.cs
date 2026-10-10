@@ -23,13 +23,13 @@ static class TranspositionTable {
     }
 
     // Record a new hash entry into the table
-    public static void RecordHash(Board board, int depth, int value, int flag, Move move) {
+    public static void RecordHash(Board board, int depth, int value, int flag, Move move, int ply) {
         ulong key = board.ZobristKey;
 
         HashEntry entry = new() {
             key = key,
             depth = depth,
-            value = value,
+            value = ToStored(value, ply),
             flag = flag,
             move = move
         };
@@ -38,18 +38,31 @@ static class TranspositionTable {
     }
 
     // Probe for a previously stored evaluation and use it if valid
-    public static int? ProbeHash(Board board, int depth, int alpha, int beta) {
+    public static int? ProbeHash(Board board, int depth, int alpha, int beta, int ply) {
         if (TryProbe(board.ZobristKey, out HashEntry entry)) {
             if (entry.depth >= depth) {
+                int value = FromStored(entry.value, ply);
                 return entry.flag switch {
-                    HashFlag.EXACT => entry.value,
-                    HashFlag.ALPHA when entry.value <= alpha => alpha,
-                    HashFlag.BETA when entry.value >= beta => beta,
+                    HashFlag.EXACT => value,
+                    HashFlag.ALPHA when value <= alpha => alpha,
+                    HashFlag.BETA when value >= beta => beta,
                     _ => null
                 };
             }
         }
         return null;
+    }
+
+    // Mate scores count plies from the root, but the same position can be reached at a different ply,
+    // so they are stored counted from the position itself and converted back when read
+    static int ToStored(int value, int ply) {
+        if (!Bot.IsMateScore(value)) return value;
+        return value > 0 ? value + ply : value - ply;
+    }
+
+    static int FromStored(int value, int ply) {
+        if (!Bot.IsMateScore(value)) return value;
+        return value > 0 ? value - ply : value + ply;
     }
 
     // Clear the transposition table

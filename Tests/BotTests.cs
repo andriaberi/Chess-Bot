@@ -19,6 +19,30 @@ public class BotTests {
     }
 
     [Fact]
+    public void ReportsMateDistance() {
+        // Black mates in one: reported from white's point of view
+        Board board = new Board("");
+        Play(board, "f2f3", "e7e5", "g2g4");
+        Chess.Bot.Bot.Think(board, Clock);
+        Assert.Equal(-1, Chess.Bot.Bot.LastSearch!.MateIn);
+
+        // Rook ladder: 1. Ra7 Kg8 2. Rb8#, with no mate in one
+        board = new Board("R3K3/1R6/8/8/8/8/8/7k w - - 0 1");
+        Chess.Bot.Bot.Think(board, Clock);
+        Assert.Equal(2, Chess.Bot.Bot.LastSearch!.MateIn);
+    }
+
+    [Fact]
+    public void TranspositionTable_KeepsMateDistanceWhenReachedAtAnotherPly() {
+        // Stored 3 plies from the root with a mate 4 plies further on (ply 7), then reached again at ply 1: mate is at ply 5
+        Board board = new Board("");
+        Chess.Bot.TranspositionTable.Clear();
+        Chess.Bot.TranspositionTable.RecordHash(board, 5, -1000000 + 7, Chess.Bot.HashFlag.EXACT, Move.NullMove, 3);
+
+        Assert.Equal(-1000000 + 5, Chess.Bot.TranspositionTable.ProbeHash(board, 5, -2000000, 2000000, 1));
+    }
+
+    [Fact]
     public void CapturesAHangingQueen() {
         Board board = new Board("");
         Play(board, "e2e4", "d7d5", "d1g4"); // The queen on g4 can be taken by the c8 bishop
