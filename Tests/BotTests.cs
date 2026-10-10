@@ -42,6 +42,19 @@ public class BotTests {
         Assert.Equal(-1000000 + 5, Chess.Bot.TranspositionTable.ProbeHash(board, 5, -2000000, 2000000, 1));
     }
 
+    [Theory]
+    [InlineData("2B1K3/8/8/8/8/7n/8/4k3 w - - 0 1")] // K+B vs K+N
+    [InlineData("4K3/8/2B5/8/8/8/8/4k3 w - - 0 1")]  // K+B vs K
+    [InlineData("4K3/8/2NN4/8/8/8/8/4k3 b - - 0 1")] // K+N+N vs K
+    public void Evaluate_IsLevelWhenNeitherSideCanForceMate(string fen) {
+        Assert.Equal(0, Chess.Bot.Evaluation.Evaluate(new Board(fen)));
+    }
+
+    [Fact]
+    public void Evaluate_FavorsBishopAndKnightAgainstABareKing() {
+        Assert.True(Chess.Bot.Evaluation.Evaluate(new Board("4K3/8/2BN4/8/8/8/8/4k3 w - - 0 1")) > 0);
+    }
+
     [Fact]
     public void CapturesAHangingQueen() {
         Board board = new Board("");
