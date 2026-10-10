@@ -27,53 +27,41 @@ class Arbiter {
 
         if (board.HalfMoveClock >= 100) return true;
 
+        return IsDeadPosition(board);
+    }
+
+    // No sequence of legal moves can end in checkmate. Mate stays possible (with help) in
+    // positions like K+N+N vs K, K+B vs K+N or bishops on both colors, so those play on
+    static bool IsDeadPosition(Board board) {
         if (!board.Type[Piece.Rook].IsEmpty) return false;
         if (!board.Type[Piece.Queen].IsEmpty) return false;
         if (!board.Type[Piece.Pawn].IsEmpty) return false;
 
-        // If there is two bishops on the different color squares, checkmate still can be delivered
-        if ((board.Type[Piece.Bishop] & board.Color[true]).Count() >= 2) {
-            Bitboard bishops = board.Type[Piece.Bishop] & board.Color[true];
-            int k = 0;
-            while (!bishops.IsEmpty) {
-                int index = bishops.FirstBit;
-                k |= 1 << ((index / 8 + index % 8) % 2);
+        int knights = board.Type[Piece.Knight].Count();
+        Bitboard bishops = board.Type[Piece.Bishop];
 
-                bishops.ClearBit(index);
-            }
+        // K vs K, or K+N vs K
+        if (bishops.IsEmpty) return knights <= 1;
+        if (knights > 0) return false;
 
-            if (k == 0b11) return false;
-        }
-
-        if ((board.Type[Piece.Bishop] & board.Color[false]).Count() >= 2) {
-            Bitboard bishops = board.Type[Piece.Bishop] & board.Color[false];
-            int k = 0;
-            while (!bishops.IsEmpty) {
-                int index = bishops.FirstBit;
-                k |= 1 << ((index / 8 + index % 8) % 2);
-
-                bishops.ClearBit(index);
-            }
-
-            if (k == 0b11) return false;
-        }
-
-        // If there is a bishop and a knight, checkmate still can be delivered
-        if (!(board.Type[Piece.Bishop] & board.Color[true]).IsEmpty &&
-             !(board.Type[Piece.Knight] & board.Color[true]).IsEmpty) return false;
-
-        if (!(board.Type[Piece.Bishop] & board.Color[false]).IsEmpty &&
-             !(board.Type[Piece.Knight] & board.Color[false]).IsEmpty) return false;
-
-        return true;
+        // Any number of bishops, all on the same color of square, for either side
+        Bitboard lightBishops = bishops & LightSquares;
+        return lightBishops.IsEmpty || lightBishops.Count() == bishops.Count();
     }
+
+    // Only a bare king can never checkmate, so running out of time against one is a draw
+    static bool HasOnlyKing(Board board, bool isWhite) {
+        return (board.Color[isWhite] & ~board.Type[Piece.King]).IsEmpty;
+    }
+
+    static readonly Bitboard LightSquares = new Bitboard(0x55AA55AA55AA55AAUL);
 
     public static string Status(Board board, double? whiteTime = null, double? blackTime = null) {
         if (IsCheckmate(board)) return "Checkmate";
         if (IsStalemate(board)) return "Stalemate";
         if (IsDraw(board)) return "Draw";
-        if (whiteTime != null && whiteTime == 0) return "Time Out";
-        if (blackTime != null && blackTime == 0) return "Time Out";
+        if (whiteTime != null && whiteTime == 0) return HasOnlyKing(board, false) ? "Draw" : "Time Out";
+        if (blackTime != null && blackTime == 0) return HasOnlyKing(board, true) ? "Draw" : "Time Out";
 
         return "";
     }

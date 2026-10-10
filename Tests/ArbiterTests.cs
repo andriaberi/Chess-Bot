@@ -38,6 +38,22 @@ public class ArbiterTests {
         Assert.False(Arbiter.IsDraw(new Board("KR6/8/8/8/8/8/8/7k w - - 0 1")));
     }
 
+    [Theory]
+    [InlineData("KB6/8/8/8/8/8/8/7k w - - 0 1")] // K+B vs K
+    [InlineData("KN6/8/8/8/8/8/8/7k w - - 0 1")] // K+N vs K
+    [InlineData("KB6/b7/8/8/8/8/8/7k w - - 0 1")] // Bishops on the same color
+    public void NoPossibleMate_IsDraw(string fen) {
+        Assert.True(Arbiter.IsDraw(new Board(fen)));
+    }
+
+    [Theory]
+    [InlineData("KNN5/8/8/8/8/8/8/7k w - - 0 1")] // K+N+N vs K
+    [InlineData("KB6/8/8/8/8/8/8/6nk w - - 0 1")] // K+B vs K+N
+    [InlineData("KBb5/8/8/8/8/8/8/7k w - - 0 1")] // Bishops on opposite colors
+    public void MateStillPossible_IsNotADraw(string fen) {
+        Assert.False(Arbiter.IsDraw(new Board(fen)));
+    }
+
     [Fact]
     public void ThreefoldRepetition_IsDraw() {
         Board board = new Board("");
@@ -49,5 +65,14 @@ public class ArbiterTests {
     [Fact]
     public void ClockAtZero_IsTimeOut() {
         Assert.Equal("Time Out", Arbiter.Status(new Board(""), whiteTime: 0, blackTime: 100));
+    }
+
+    [Fact]
+    public void ClockAtZeroAgainstABareKing_IsDraw() {
+        // White has a rook, black only a king: black cannot win on time, white can
+        Board board = new Board("KR6/8/8/8/8/8/8/7k w - - 0 1");
+
+        Assert.Equal("Draw", Arbiter.Status(board, whiteTime: 0, blackTime: 100));
+        Assert.Equal("Time Out", Arbiter.Status(board, whiteTime: 100, blackTime: 0));
     }
 }
