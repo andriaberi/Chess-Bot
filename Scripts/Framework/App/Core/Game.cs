@@ -29,7 +29,6 @@ class Game {
     private App.Player currentPlayer;
 
     private bool statusCheck = true;
-    private bool gameChanged = false;
     private bool gameOver = false;
 
     private Task BotTask;
@@ -152,9 +151,9 @@ class Game {
     private void AnimateMove(Move move, CancellationToken token) {
         if (token.IsCancellationRequested) return;
 
-        if (Arbiter.Status(chessBoard, whiteTimer.Time, blackTimer.Time) != "" || gameChanged) {
+        // The game ended (e.g. on time) while the bot was thinking
+        if (Arbiter.Status(chessBoard, whiteTimer.Time, blackTimer.Time) != "") {
             statusCheck = true;
-            gameChanged = false;
             return;
         }
 
@@ -246,7 +245,6 @@ class Game {
         animationTokenSource = new CancellationTokenSource();
 
         statusCheck = true;
-        gameChanged = true;
         gameOver = false;
     }
 
