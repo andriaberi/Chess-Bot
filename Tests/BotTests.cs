@@ -19,6 +19,19 @@ public class BotTests {
     }
 
     [Fact]
+    public void EasyLevel_StillFindsMateInOne() {
+        Board board = new Board("");
+        Play(board, "f2f3", "e7e5", "g2g4");
+
+        Chess.Bot.Bot.Level = Chess.Bot.Difficulty.Easy;
+        try {
+            Assert.Equal("d8h4", Uci(Chess.Bot.Bot.Think(board, Clock)));
+        } finally {
+            Chess.Bot.Bot.Level = Chess.Bot.Difficulty.Hard;
+        }
+    }
+
+    [Fact]
     public void ReportsMateDistance() {
         // Black mates in one: reported from white's point of view
         Board board = new Board("");

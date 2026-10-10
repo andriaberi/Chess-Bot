@@ -5,7 +5,20 @@ using System.Runtime.CompilerServices;
 using Chess.API;
 using Chess.ChessEngine;
 
+// Easy searches shallowly and picks among nearly equal moves at random, Medium searches a little deeper,
+// Hard searches as deep as its think time allows
+enum Difficulty { Easy, Medium, Hard }
+
 class Bot {
+    public static Difficulty Level = Difficulty.Hard;
+
+    // Deepest search, longest think per move in seconds, and random noise added to move scores in centipawns
+    static (int MaxDepth, double MaxThinkTime, int Noise) LevelSettings => Level switch {
+        Difficulty.Easy => (2, 0.5, 150),
+        Difficulty.Medium => (4, 1.0, 0),
+        _ => (int.MaxValue, double.MaxValue, 0)
+    };
+
     const int positiveInfinity = 1000000000;
     const int negativeInfinity = -1000000000;
     const int checkmate = -1000000;
@@ -36,7 +49,8 @@ class Bot {
     public static Move Think(Board board, double timeLeft, CancellationToken cancel = default) {
         overallBestMove = Move.NullMove;
         nodes = 0;
-        timeLimitSeconds = GetThinkTime(board, timeLeft);
+        var (maxDepth, maxThinkTime, noise) = LevelSettings;
+        timeLimitSeconds = Math.Min(GetThinkTime(board, timeLeft), maxThinkTime);
 
         // Each search gets its own timer, so a timer left over from an earlier search cannot cut this one short
         using var searchTimer = CancellationTokenSource.CreateLinkedTokenSource(cancel);
@@ -51,7 +65,7 @@ class Bot {
         LastSearch = info;
 
         // Iterative deepening loop
-        for (int depth = 1; depth <= int.MaxValue; depth++) {
+        for (int depth = 1; depth <= maxDepth; depth++) {
             if (searchCancelled) break;
 
             currentBestMove = Move.NullMove;
@@ -70,8 +84,31 @@ class Bot {
             }
         }
 
+        if (noise > 0 && !searchCancelled) overallBestMove = NoisyBestMove(board, depthSearched, noise);
+
         LastSearch = info with { Move = overallBestMove, Nodes = nodes, Seconds = stopwatch.Elapsed.TotalSeconds, Thinking = false };
         return overallBestMove;
+    }
+
+    // Scores every move with random noise added, so weaker levels sometimes play a slightly worse move
+    // Mates and clear material swings still outweigh the noise
+    static Move NoisyBestMove(Board board, int depth, int noise) {
+        Move best = Move.NullMove;
+        int bestScore = negativeInfinity;
+
+        foreach (Move move in MoveGenerator.GenerateMoves(board)) {
+            board.MakeMove(move);
+            int score = -Search(board, depth - 1, negativeInfinity, positiveInfinity, 1) + Random.Shared.Next(-noise, noise + 1);
+            board.UnmakeMove(move);
+
+            if (searchCancelled) return overallBestMove;
+            if (score > bestScore) {
+                bestScore = score;
+                best = move;
+            }
+        }
+
+        return best.IsNull ? overallBestMove : best;
     }
 
     // Main minimax search with alpha-beta pruning; ply is the distance from the root
