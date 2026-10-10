@@ -41,4 +41,5 @@ class Theme {
     public static Color ButtonTextColor = new Color(185, 185, 185, 255);
     public static Color ButtonHoverColor = new Color(65, 136, 255, 255);
     public static Color ButtonHoverTextColor = new Color(255, 255, 255, 255);
+    public static Color ButtonDisabledTextColor = new Color(110, 110, 110, 255);
 }

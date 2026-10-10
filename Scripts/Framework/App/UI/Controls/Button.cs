@@ -30,6 +30,18 @@ class Button {
         );
     }
 
+    // Changes the label, keeping it centered
+    public void SetText(string text) {
+        if (text == Text) return;
+        Text = text;
+
+        Vector2 textSize = Raylib.MeasureTextEx(font, text, fontSize, 0);
+        TextPosition = new Vector2(
+            Bounds.X + Bounds.Width / 2 - textSize.X / 2,
+            Bounds.Y + Bounds.Height / 2 - textSize.Y / 2
+        );
+    }
+
     public void UpdateHover(Vector2 mousePos) {
         IsHovered = Raylib.CheckCollisionPointRec(mousePos, Bounds);
     }

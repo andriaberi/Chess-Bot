@@ -16,7 +16,8 @@ class UIHelper {
         return Settings.ScreenHeight / 2 - (Settings.FromWhitesView ? (rowIndex - 3) : (4 - rowIndex)) * Settings.SquareSideLength;
     }
 
-    // The column left of the board stacks the menu button, the bot panel and the game result from the board's top edge
+    // The column left of the board stacks the menu button, the bot panel, the eval graph and the game result,
+    // with the Hint and Resign buttons at the bottom
     public const int LeftColumnWidth = 320;
     public static int LeftColumnX => (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - LeftColumnWidth / 2;
 

@@ -13,7 +13,7 @@ class Bot {
     public static Difficulty Level = Difficulty.Hard;
 
     // Deepest search, longest think per move in seconds, and random noise added to move scores in centipawns
-    static (int MaxDepth, double MaxThinkTime, int Noise) LevelSettings => Level switch {
+    static (int MaxDepth, double MaxThinkTime, int Noise) LevelSettings(Difficulty level) => level switch {
         Difficulty.Easy => (2, 0.5, 150),
         Difficulty.Medium => (4, 1.0, 0),
         _ => (int.MaxValue, double.MaxValue, 0)
@@ -46,10 +46,11 @@ class Bot {
     public static Move overallBestMove = Move.NullMove;
 
     // Entry point: searches for best move within a time budget, or until the caller cancels it
-    public static Move Think(Board board, double timeLeft, CancellationToken cancel = default) {
+    // Plays at the chosen Level unless another is given, as for a hint
+    public static Move Think(Board board, double timeLeft, CancellationToken cancel = default, Difficulty? level = null) {
         overallBestMove = Move.NullMove;
         nodes = 0;
-        var (maxDepth, maxThinkTime, noise) = LevelSettings;
+        var (maxDepth, maxThinkTime, noise) = LevelSettings(level ?? Level);
         timeLimitSeconds = Math.Min(GetThinkTime(board, timeLeft), maxThinkTime);
 
         // Each search gets its own timer, so a timer left over from an earlier search cannot cut this one short

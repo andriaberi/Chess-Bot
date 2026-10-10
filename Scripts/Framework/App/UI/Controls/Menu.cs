@@ -5,7 +5,8 @@ using Chess.Utility;
 using Raylib_cs;
 using System.Numerics;
 
-enum MenuAction { None, PlayAsWhite, PlayAsBlack, AiVsAi, SaveGame, CopyFen, FlipBoard, Exit }
+// What the menu and the buttons under the eval graph ask the game to do
+enum GameAction { None, PlayAsWhite, PlayAsBlack, AiVsAi, SaveGame, CopyFen, FlipBoard, Exit, Hint, Resign }
 
 class Menu {
     // A "Menu" button at the top of the left column, opening a popup over the board with the game controls
@@ -35,7 +36,7 @@ class Menu {
     private static Font captionFont = UIHelper.LoadFont(CaptionFontSize);
 
     // A button in the popup; IsSelected marks the current choice of a setting, OnClick returns the action to take
-    private record Entry(Button Button, Func<bool> IsSelected, Func<MenuAction> OnClick);
+    private record Entry(Button Button, Func<bool> IsSelected, Func<GameAction> OnClick);
 
     private static readonly (string Label, double Seconds)[] clocks = {
         ("3 min", 3 * 60), ("5 min", 5 * 60), ("10 min", 10 * 60), ("Off", double.PositiveInfinity)
@@ -47,9 +48,9 @@ class Menu {
         // Laid out top to bottom first, then the panel is centered on the board around it
         int contentWidth = PanelWidth - Padding * 2;
         int y = Padding;
-        var rows = new List<(int Y, (string Label, Func<bool> IsSelected, Func<MenuAction> OnClick)[] Items)>();
+        var rows = new List<(int Y, (string Label, Func<bool> IsSelected, Func<GameAction> OnClick)[] Items)>();
 
-        void Section(string caption, params (string, Func<bool>, Func<MenuAction>)[] items) {
+        void Section(string caption, params (string, Func<bool>, Func<GameAction>)[] items) {
             captions.Add((caption, y));
             y += CaptionFontSize + 8;
             rows.Add((y, items));
@@ -59,9 +60,9 @@ class Menu {
         Func<bool> never = () => false;
 
         Section("New game",
-            ("Play White", never, () => MenuAction.PlayAsWhite),
-            ("Play Black", never, () => MenuAction.PlayAsBlack),
-            ("AI vs AI", never, () => MenuAction.AiVsAi));
+            ("Play White", never, () => GameAction.PlayAsWhite),
+            ("Play Black", never, () => GameAction.PlayAsBlack),
+            ("AI vs AI", never, () => GameAction.AiVsAi));
 
         Section("Bot difficulty",
             ("Easy", () => Bot.Level == Difficulty.Easy, () => SetLevel(Difficulty.Easy)),
@@ -71,20 +72,20 @@ class Menu {
         Section("Clock (from the next game)", clocks.Select(clock => (
             clock.Label,
             (Func<bool>) (() => Settings.TimeLimit == clock.Seconds),
-            (Func<MenuAction>) (() => SetClock(clock.Seconds)))).ToArray());
+            (Func<GameAction>) (() => SetClock(clock.Seconds)))).ToArray());
 
         Section("Game",
-            ("Save game", never, () => MenuAction.SaveGame),
-            ("Copy FEN", never, () => MenuAction.CopyFen),
-            ("Flip board", never, () => MenuAction.FlipBoard));
+            ("Save game", never, () => GameAction.SaveGame),
+            ("Copy FEN", never, () => GameAction.CopyFen),
+            ("Flip board", never, () => GameAction.FlipBoard));
 
         // A line for feedback such as "Saved to ...", above the last row
         messageY = y;
         y += CaptionFontSize + SectionGap;
 
-        rows.Add((y, new (string, Func<bool>, Func<MenuAction>)[] {
-            ("Resume", never, () => { IsOpen = false; return MenuAction.None; }),
-            ("Exit", never, () => MenuAction.Exit)
+        rows.Add((y, new (string, Func<bool>, Func<GameAction>)[] {
+            ("Resume", never, () => { IsOpen = false; return GameAction.None; }),
+            ("Exit", never, () => GameAction.Exit)
         }));
         y += ButtonHeight + Padding;
 
@@ -106,14 +107,14 @@ class Menu {
         }
     }
 
-    private static MenuAction SetLevel(Difficulty level) {
+    private static GameAction SetLevel(Difficulty level) {
         Bot.Level = level;
-        return MenuAction.None;
+        return GameAction.None;
     }
 
-    private static MenuAction SetClock(double seconds) {
+    private static GameAction SetClock(double seconds) {
         Settings.TimeLimit = seconds;
-        return MenuAction.None;
+        return GameAction.None;
     }
 
     public void ShowMessage(string text) {
@@ -123,16 +124,16 @@ class Menu {
 
     public void Close() => IsOpen = false;
 
-    public MenuAction Update() {
+    public GameAction Update() {
         Vector2 mouse = Raylib.GetMousePosition();
 
         menuButton.UpdateHover(mouse);
         if (menuButton.WasClicked()) {
             IsOpen = !IsOpen;
-            return MenuAction.None;
+            return GameAction.None;
         }
 
-        if (!IsOpen) return MenuAction.None;
+        if (!IsOpen) return GameAction.None;
 
         foreach (Entry entry in entries) {
             entry.Button.UpdateHover(mouse);
@@ -142,7 +143,7 @@ class Menu {
         // A click outside the popup closes it
         if (Raylib.IsMouseButtonPressed(MouseButton.Left) && !Raylib.CheckCollisionPointRec(mouse, panel)) IsOpen = false;
 
-        return MenuAction.None;
+        return GameAction.None;
     }
 
     public void Render() {
