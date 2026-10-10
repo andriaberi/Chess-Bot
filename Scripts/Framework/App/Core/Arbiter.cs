@@ -22,12 +22,16 @@ class Arbiter {
         return true;
     }
 
-    public static bool IsDraw(Board board) {
-        if (board.CountZobristKeys(board.ZobristKey) >= 3) return true;
+    public static bool IsDraw(Board board) => DrawReason(board) != "";
 
-        if (board.HalfMoveClock >= 100) return true;
-
-        return IsDeadPosition(board);
+    // Why the game is drawn (other than stalemate), or "" when it is not
+    public static string DrawReason(Board board, double? whiteTime = null, double? blackTime = null) {
+        if (board.CountZobristKeys(board.ZobristKey) >= 3) return "Repetition";
+        if (board.HalfMoveClock >= 100) return "50-move rule";
+        if (IsDeadPosition(board)) return "Insufficient material";
+        // Out of time, but the opponent has nothing to win with
+        if ((whiteTime == 0 && HasOnlyKing(board, false)) || (blackTime == 0 && HasOnlyKing(board, true))) return "Insufficient material";
+        return "";
     }
 
     // No sequence of legal moves can end in checkmate. Mate stays possible (with help) in

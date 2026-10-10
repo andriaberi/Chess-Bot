@@ -56,7 +56,7 @@ class Game {
         coord = new Coords();
         position = new Position(chessBoard);
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
-        gameStatus = new Status("");
+        gameStatus = Status.None;
         buttons = new Menu();
         botInfo = new BotInfo();
         evalBar = new EvalBar();
@@ -81,13 +81,7 @@ class Game {
 
         string status = Arbiter.Status(chessBoard, whiteTimer.Time, blackTimer.Time);
         if (status != "") {
-            Color color = Color.White;
-
-            if (status == "Checkmate") color = Theme.CheckmateTextColor;
-            if (status == "Stalemate") color = Theme.StalemateTextColor;
-            if (status == "Draw") color = Theme.DrawTextColor;
-
-            gameStatus = new Status(status, color);
+            gameStatus = GameOverStatus(status);
             gameOver = true;
 
             goto Handle;
@@ -119,6 +113,20 @@ class Game {
         int buttonUpdate = buttons.Update();
         if (buttonUpdate != -1) {
             HandleButtonPress(buttonUpdate);
+        }
+    }
+
+    private Status GameOverStatus(string status) {
+        switch (status) {
+            case "Checkmate":
+                // The side to move is the one that got mated
+                return new Status("Checkmate", chessBoard.IsWhiteTurn ? "Black Wins" : "White Wins", Theme.CheckmateTextColor);
+            case "Time Out":
+                return new Status("Out of time", whiteTimer.Time == 0 ? "Black Wins" : "White Wins", Theme.CheckmateTextColor);
+            case "Stalemate":
+                return new Status("Stalemate", "Draw", Theme.StalemateTextColor);
+            default:
+                return new Status(Arbiter.DrawReason(chessBoard, whiteTimer.Time, blackTimer.Time), "Draw", Theme.DrawTextColor);
         }
     }
 
@@ -224,7 +232,7 @@ class Game {
         coord = new Coords();
         position = new Position(chessBoard);
         player = new Player(whitePlayer.PlayerType, blackPlayer.PlayerType);
-        gameStatus = new Status("");
+        gameStatus = Status.None;
         buttons = new Menu();
         botInfo = new BotInfo();
         evalBar = new EvalBar();
