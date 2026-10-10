@@ -55,7 +55,7 @@ class BotInfo {
         Raylib.DrawTextEx(captionFont, caption, new Vector2(x + Padding, contentY), CaptionFontSize, 1, Theme.ButtonTextColor);
         contentY += CaptionFontSize;
 
-        string move = info == null || info.Move.IsNull ? "-" : FormatMove(info.Move);
+        string move = info == null || info.Move.IsNull ? "-" : ChessEngine.Notation.ToUci(info.Move);
         string eval = searched && info!.Depth > 0 ? FormatEval(info) : "";
         Raylib.DrawTextEx(moveFont, move, new Vector2(x + Padding, contentY), MoveFontSize, 1, Theme.ButtonHoverTextColor);
         DrawRightAligned(moveFont, eval, x + Width - Padding, contentY, MoveFontSize, Theme.ButtonTextColor);
@@ -75,18 +75,6 @@ class BotInfo {
     private static void DrawRightAligned(Font font, string text, int right, int y, int fontSize, Color color) {
         Vector2 size = Raylib.MeasureTextEx(font, text, fontSize, 1);
         Raylib.DrawTextEx(font, text, new Vector2(right - size.X, y), fontSize, 1, color);
-    }
-
-    // Long algebraic notation, e.g. e2e4 or e7e8q
-    private static string FormatMove(Move move) {
-        string promotion = move.Flag switch {
-            Move.QueenPromotion => "q",
-            Move.RookPromotion => "r",
-            Move.BishopPromotion => "b",
-            Move.KnightPromotion => "n",
-            _ => ""
-        };
-        return $"{move.SourceCoord}{move.TargetCoord}{promotion}";
     }
 
     private static string FormatEval(SearchInfo info) {

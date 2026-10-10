@@ -47,15 +47,22 @@ class Bot {
 
     // Entry point: searches for best move within a time budget, or until the caller cancels it
     // Plays at the chosen Level unless another is given, as for a hint
-    public static Move Think(Board board, double timeLeft, CancellationToken cancel = default, Difficulty? level = null) {
+    // A UCI controller can also give the clock's increment, fix the think time (go movetime; infinity for go infinite)
+    // or cap the depth (go depth)
+    public static Move Think(Board board, double timeLeft, CancellationToken cancel = default, Difficulty? level = null,
+                             double increment = 0, double? thinkTime = null, int? depthLimit = null) {
         overallBestMove = Move.NullMove;
         nodes = 0;
         var (maxDepth, maxThinkTime, noise) = LevelSettings(level ?? Level);
-        timeLimitSeconds = Math.Min(GetThinkTime(board, timeLeft), maxThinkTime);
+
+        // Most of each increment can be spent, as it comes back after the move, but never more than half the clock
+        double clockTime = Math.Min(GetThinkTime(board, timeLeft) + increment * 0.75, Math.Max(timeLeft / 2, 0.01));
+        timeLimitSeconds = thinkTime ?? Math.Min(clockTime, maxThinkTime);
+        if (depthLimit != null) maxDepth = Math.Min(maxDepth, depthLimit.Value);
 
         // Each search gets its own timer, so a timer left over from an earlier search cannot cut this one short
         using var searchTimer = CancellationTokenSource.CreateLinkedTokenSource(cancel);
-        searchTimer.CancelAfter(TimeSpan.FromSeconds(timeLimitSeconds));
+        if (!double.IsPositiveInfinity(timeLimitSeconds)) searchTimer.CancelAfter(TimeSpan.FromSeconds(timeLimitSeconds));
         searchToken = searchTimer.Token;
 
         int depthSearched = 0, eval = 0;
