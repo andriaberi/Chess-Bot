@@ -58,6 +58,7 @@ static class TestHelpers {
         board.IsWhiteTurn,
         board.CastlingRights,
         board.EnPassantSquare,
+        board.HalfMoveClock,
         board.MoveCount,
         board.ZobristKey,
         board.PastZobristKeys.Count);

@@ -9,13 +9,14 @@ class MoveUtility {
 
 
     public static void MakeMove(Board board, Move move) {
-        if (!board.Square[move.Source].IsNone || board.Square[move.Source].Type == Piece.Pawn) {
+        history.Add(new UndoState(board.Square[move.Target], board.CastlingRights, board.HalfMoveClock));
+
+        // Captures and pawn moves reset the 50-move counter
+        if (!board.Square[move.Target].IsNone || board.Square[move.Source].Type == Piece.Pawn) {
             board.HalfMoveClock = 0;
         } else {
             board.HalfMoveClock++;
         }
-
-        history.Add(new UndoState(board.Square[move.Target], board.CastlingRights, board.HalfMoveClock));
 
         board.EnPassantSquare = -1;
 

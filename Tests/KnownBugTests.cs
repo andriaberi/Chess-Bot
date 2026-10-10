@@ -5,14 +5,6 @@ using static TestHelpers;
 
 // Tests for bugs that are known but not fixed yet; remove the Skip once the bug is fixed
 public class KnownBugTests {
-    [Fact(Skip = "Known bug: MoveUtility.MakeMove resets HalfMoveClock on every move, so the 50-move rule never triggers")]
-    public void QuietMove_IncrementsHalfMoveClock() {
-        Board board = new Board("");
-        Play(board, "g1f3");
-
-        Assert.Equal(1, board.HalfMoveClock);
-    }
-
     [Fact(Skip = "Known bug: MoveUtility.UnmakeMove clears the en passant square unless the undone move was en passant")]
     public void UnmakeMove_RestoresEnPassantSquare() {
         Board board = new Board("");

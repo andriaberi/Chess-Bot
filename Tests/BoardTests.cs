@@ -49,6 +49,28 @@ public class BoardTests {
     }
 
     [Fact]
+    public void QuietMove_IncrementsHalfMoveClock() {
+        Board board = new Board("");
+        Play(board, "g1f3");
+
+        Assert.Equal(1, board.HalfMoveClock);
+    }
+
+    [Fact]
+    public void CaptureAndPawnMoves_ResetHalfMoveClock() {
+        Board board = new Board("");
+
+        Play(board, "g1f3", "b8c6");
+        Assert.Equal(2, board.HalfMoveClock);
+
+        Play(board, "e2e4");
+        Assert.Equal(0, board.HalfMoveClock);
+
+        Play(board, "c6d4", "f3d4");
+        Assert.Equal(0, board.HalfMoveClock);
+    }
+
+    [Fact]
     public void ZobristKey_IsTheSameForTransposedMoveOrders() {
         Board first = new Board("");
         Play(first, "e2e4", "e7e5", "g1f3");
