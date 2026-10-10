@@ -17,6 +17,7 @@ class FenUtility {
     // 5. Halfmove clock: The number of halfmoves since the last pawn advance or capture.
     // 6. Fullmove number: The number of the full move. It starts at 1, and is incremented after black
     public static string startingFen = "RNBQKBNR/PPPPPPPP/8/8/8/8/pppppppp/rnbqkbnr w KQkq - 0 1"; // Default starting position
+    public const string StandardStartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // The same, as ToFen writes it
 
     private static Dictionary<char, int> PieceByChar = new() {
         { 'p', Piece.Pawn },

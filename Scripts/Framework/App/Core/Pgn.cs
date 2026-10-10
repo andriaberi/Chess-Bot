@@ -5,7 +5,6 @@ using System.Text;
 class Pgn {
     // Portable Game Notation: tag pairs, then the moves, e.g. "1. e4 e5 2. Nf3 Nc6 1-0"
     // Other chess programs and sites can import it, and it reads fine as plain text
-    private const string StandardStartFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     private const int LineLength = 80;
 
     // Result is "1-0", "0-1", "1/2-1/2", or "*" for a game still in progress
@@ -23,7 +22,7 @@ class Pgn {
         Tag("Result", result);
 
         // A game set up from another position records where it started
-        if (board.StartFen != StandardStartFen) {
+        if (board.StartFen != ChessEngine.FenUtility.StandardStartFen) {
             Tag("SetUp", "1");
             Tag("FEN", board.StartFen);
         }

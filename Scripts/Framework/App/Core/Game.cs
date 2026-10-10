@@ -182,7 +182,9 @@ class Game {
         try {
             if (token.IsCancellationRequested) return;
 
-            Move move = openingBook.GetMove(chessBoard.MovesMade);
+            // The book follows games from the standard start, so it can't be used for a game set up from another position
+            bool fromStart = chessBoard.StartFen == ChessEngine.FenUtility.StandardStartFen;
+            Move move = fromStart ? openingBook.GetMove(chessBoard.MovesMade) : Move.NullMove;
             if (move.IsNull) move = currentPlayer.Search(chessBoard, chessBoard.IsWhiteTurn ? whiteTimer.Time : blackTimer.Time, token);
             else Bot.LastSearch = new SearchInfo(move, 0, 0, 0, 0, 0, 0, DateTime.Now, FromBook: true);
 
