@@ -20,6 +20,9 @@ class UIHelper {
     public const int LeftColumnWidth = 320;
     public static int LeftColumnX => (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - LeftColumnWidth / 2;
 
+    // The column right of the board, mirroring the left one, holds the move history
+    public static int RightColumnX => Settings.ScreenWidth - LeftColumnX - LeftColumnWidth;
+
     // Top and bottom edges of the board's frame
     public static int BoardTop => Settings.ScreenHeight / 2 - 4 * Settings.SquareSideLength - Settings.BorderSize;
     public static int BoardBottom => Settings.ScreenHeight / 2 + 4 * Settings.SquareSideLength + Settings.BorderSize;

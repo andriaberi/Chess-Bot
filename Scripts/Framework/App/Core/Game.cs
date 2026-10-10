@@ -23,6 +23,7 @@ class Game {
     private Menu buttons;
     private BotInfo botInfo;
     private EvalBar evalBar;
+    private MoveHistory moveHistory;
 
     private OpeningBook openingBook;
 
@@ -59,6 +60,7 @@ class Game {
         buttons = new Menu();
         botInfo = new BotInfo();
         evalBar = new EvalBar();
+        moveHistory = new MoveHistory();
         Bot.LastSearch = null;
 
         if (!File.Exists("Resources/Openings/Books.bin")) {
@@ -235,6 +237,7 @@ class Game {
         buttons = new Menu();
         botInfo = new BotInfo();
         evalBar = new EvalBar();
+        moveHistory = new MoveHistory();
         Bot.LastSearch = null;
 
         openingBook = new OpeningBook();
@@ -252,6 +255,7 @@ class Game {
         buttons.Render();
         botInfo.Render();
         evalBar.Render();
+        moveHistory.Render(chessBoard);
         board.Render();
         coord.Render();
         position.Render();
