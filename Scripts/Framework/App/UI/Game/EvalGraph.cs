@@ -45,7 +45,7 @@ class EvalGraph {
         int segment = 0;
         for (int column = 0; column < (int) area.Width; column++) {
             float ply = column / area.Width * span;
-            if (ply > plies) break;
+            if (ply > plies || plies == 0) break; // Nothing at all before the first move, not even a one-pixel column
 
             while (segment + 1 < points.Length && points[segment + 1].Ply <= ply) segment++;
 
