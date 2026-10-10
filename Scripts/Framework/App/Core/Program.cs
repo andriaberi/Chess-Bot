@@ -7,6 +7,12 @@ using System.Numerics;
 
 class Program {
     static void Main(string[] args) {
+        // As a UCI engine for chess GUIs and tournament runners: no window, just commands on standard input and output
+        if (args.Contains("--uci")) {
+            new Uci(Console.In, Console.Out).Run();
+            return;
+        }
+
         Raylib.SetTraceLogLevel(TraceLogLevel.None);
         Raylib.SetConfigFlags(ConfigFlags.ResizableWindow);
         // Start small: some window managers (e.g. GNOME) auto-maximize a window that opens near screen size

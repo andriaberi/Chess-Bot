@@ -23,7 +23,7 @@ public class BoardTests {
     [Fact]
     public void Fen_ParsesSideToMoveAndEnPassantSquare() {
         // Position after 1. e4
-        Board board = new Board("RNBQKBNR/PPPP1PPP/8/4P3/8/8/pppppppp/rnbqkbnr b KQkq e3 0 1");
+        Board board = new Board("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
 
         Assert.False(board.IsWhiteTurn);
         Assert.Equal(Square("e3"), board.EnPassantSquare);
@@ -33,10 +33,10 @@ public class BoardTests {
 
     [Theory]
     [InlineData("")]
-    [InlineData("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20")]
-    [InlineData("8/4P1P1/8/1R3p1k/KP5r/3p4/2p5/8 w - - 0 40")]
-    [InlineData("RNBQKBNR/PPPP1PPP/8/4P3/8/8/pppppppp/rnbqkbnr b KQkq e3 0 1")]
-    [InlineData("R2Q1RK1/Pp1P2PP/q4N2/BBP1P3/nP6/1b3nbN/Pppp1ppp/r3k2r w kq - 0 1")]
+    [InlineData("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 20")]
+    [InlineData("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 40")]
+    [InlineData("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1")]
+    [InlineData("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1")]
     public void MakeThenUnmake_RestoresTheBoard(string fen) {
         Board board = new Board(fen);
         string before = Snapshot(board);
@@ -134,18 +134,18 @@ public class BoardTests {
         // 1. e4 with no black pawn next to e4: the en passant square makes no difference
         Board noCapture = new Board("");
         Play(noCapture, "e2e4");
-        Assert.Equal(ZobristHashing.CalculateZobristKey(new Board("RNBQKBNR/PPPP1PPP/8/4P3/8/8/pppppppp/rnbqkbnr b KQkq - 0 1")), noCapture.ZobristKey);
+        Assert.Equal(ZobristHashing.CalculateZobristKey(new Board("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1")), noCapture.ZobristKey);
 
         // Black pawn on d4 can take e3 en passant, so the same pieces without the en passant square are a different position
-        Board capture = new Board("RNBQKBNR/PPPP1PPP/8/3pP3/8/8/ppp1pppp/rnbqkbnr b KQkq e3 0 1");
-        Board noEnPassant = new Board("RNBQKBNR/PPPP1PPP/8/3pP3/8/8/ppp1pppp/rnbqkbnr b KQkq - 0 1");
+        Board capture = new Board("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1");
+        Board noEnPassant = new Board("rnbqkbnr/ppp1pppp/8/8/3pP3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1");
         Assert.NotEqual(noEnPassant.ZobristKey, capture.ZobristKey);
     }
 
     [Theory]
     [InlineData("")]
-    [InlineData("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20")]
-    [InlineData("R2Q1RK1/Pp1P2PP/q4N2/BBP1P3/nP6/1b3nbN/Pppp1ppp/r3k2r w kq - 0 1")]
+    [InlineData("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 20")]
+    [InlineData("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1")]
     public void IncrementalZobristKey_MatchesFullRecalculation(string fen) {
         // Walks two plies of every line, which covers castling, en passant and rook captures
         Board board = new Board(fen);

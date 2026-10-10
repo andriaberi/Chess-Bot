@@ -12,7 +12,7 @@ public class MoveGenerationTests {
 
     [Fact]
     public void Castling_IsGeneratedOnBothSides() {
-        Board board = new Board("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20");
+        Board board = new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 20");
 
         Assert.True(FindMove(board, "e1g1").IsCastling);
         Assert.True(FindMove(board, "e1c1").IsCastling);
@@ -20,7 +20,7 @@ public class MoveGenerationTests {
 
     [Fact]
     public void Castling_RookIsMovedToo() {
-        Board board = new Board("R3K2R/PPPBBPPP/2N2Q1p/1p2P3/3PN3/bn2pnp1/p1ppqpb1/r3k2r w KQkq - 0 20");
+        Board board = new Board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 20");
 
         Play(board, "e1g1");
 
@@ -45,7 +45,7 @@ public class MoveGenerationTests {
     [Fact]
     public void Promotion_OffersAllFourPieces() {
         // White pawn on a7, kings on a1 and h8
-        Board board = new Board("K7/8/8/8/8/8/P7/7k w - - 0 1");
+        Board board = new Board("7k/P7/8/8/8/8/8/K7 w - - 0 1");
 
         string[] promotions = MoveGenerator.GenerateMoves(board)
             .Where(move => move.IsPromotion)
@@ -59,7 +59,7 @@ public class MoveGenerationTests {
     [Fact]
     public void PinnedPiece_CanOnlyMoveAlongThePin() {
         // White king e1, white rook e2 pinned by the black rook on e8
-        Board board = new Board("4K3/4R3/8/8/8/8/8/k3r3 w - - 0 1");
+        Board board = new Board("k3r3/8/8/8/8/8/4R3/4K3 w - - 0 1");
 
         var rookMoves = MoveGenerator.GenerateMoves(board, Square("e2"));
 

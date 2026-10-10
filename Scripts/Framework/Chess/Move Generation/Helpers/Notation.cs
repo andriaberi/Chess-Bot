@@ -14,6 +14,21 @@ class Notation {
         return san;
     }
 
+    // Long algebraic notation as UCI uses it: source and target square, plus the promotion piece (e.g. e2e4, e7e8q)
+    // A null move is written 0000
+    public static string ToUci(Move move) {
+        if (move.IsNull) return "0000";
+        return move.SourceCoord.ToString() + move.TargetCoord.ToString() + Letter(move.PromotingTo).ToLower();
+    }
+
+    // The legal move written as in ToUci, or a null move when there is none
+    public static Move FromUci(Board board, string uci) {
+        foreach (Move move in MoveGenerator.GenerateMoves(board)) {
+            if (ToUci(move) == uci) return move;
+        }
+        return Move.NullMove;
+    }
+
     private static string MoveText(Board board, Move move) {
         if (move.IsCastling) return move.TargetCoord.ColumnIndex == 6 ? "O-O" : "O-O-O";
 

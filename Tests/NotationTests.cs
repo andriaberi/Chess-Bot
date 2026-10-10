@@ -23,12 +23,12 @@ public class NotationTests {
 
     [Fact]
     public void NamesTheSourceWhenTwoPiecesCanReachTheSquare() {
-        Assert.Equal(new[] { "Rad1" }, Played("R6R/4K3/8/8/8/8/8/4k3 w - - 0 1", "a1d1"));
-        Assert.Equal(new[] { "R1a3" }, Played("R7/4K3/8/8/R7/8/8/4k3 w - - 0 1", "a1a3"));
+        Assert.Equal(new[] { "Rad1" }, Played("4k3/8/8/8/8/8/4K3/R6R w - - 0 1", "a1d1"));
+        Assert.Equal(new[] { "R1a3" }, Played("4k3/8/8/R7/8/8/4K3/R7 w - - 0 1", "a1a3"));
     }
 
     [Fact]
     public void RecordsPromotion() {
-        Assert.Equal(new[] { "a8=Q+" }, Played("K7/8/8/8/8/8/P7/7k w - - 0 1", "a7a8q"));
+        Assert.Equal(new[] { "a8=Q+" }, Played("7k/P7/8/8/8/8/8/K7 w - - 0 1", "a7a8q"));
     }
 }
