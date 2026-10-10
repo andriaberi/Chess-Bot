@@ -94,6 +94,11 @@ class Game {
     }
 
     public void Update() {
+        // A hint searches on the board, flipping its side to move as it goes: checking the status or
+        // whose turn it is meanwhile would generate moves alongside it, or start the bot searching too
+        if (hintThinking) goto Handle;
+
+        // Checking the status generates moves on the board, so it waits while the bot searches on it
         if (!statusCheck) goto Update;
 
         string status = Arbiter.Status(chessBoard, whiteTimer.Time, blackTimer.Time);
