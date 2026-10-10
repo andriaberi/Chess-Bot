@@ -26,6 +26,7 @@ class Game {
     private EvalBar evalBar;
     private MoveHistory moveHistory;
     private EvalGraph evalGraph;
+    private Annotations annotations;
     private GameControls controls;
 
     private OpeningBook openingBook;
@@ -77,6 +78,7 @@ class Game {
         evalBar = new EvalBar();
         moveHistory = new MoveHistory();
         evalGraph = new EvalGraph();
+        annotations = new Annotations();
         Bot.LastSearch = null;
 
         if (!File.Exists("Resources/Openings/Books.bin")) {
@@ -131,7 +133,10 @@ class Game {
         GameAction action = menu.Update();
         if (!menuWasOpen && !menu.IsOpen) {
             // The hint searches on the board, so the human can't move until it is done
+            // The promotion picker uses the right button to cancel, so that click isn't also an annotation
+            bool picking = position.PromotionPickerOpen;
             position.Update(chessBoard, board, highlightMoves: statusCheck && !gameOver && !hintThinking, ref whiteTimer, ref blackTimer);
+            if (!picking && !position.PromotionPickerOpen) annotations.Update(chessBoard);
         }
         position.AnimatePromotion(chessBoard);
 
@@ -305,24 +310,9 @@ class Game {
     private void RenderHint() {
         if (gameOver || hintMove.IsNull || hintPly != chessBoard.MovesNotation.Count) return;
 
-        float half = Settings.SquareSideLength / 2f;
-        Vector2 from = new Vector2(UIHelper.GetScreenX(hintMove.SourceCoord) + half, UIHelper.GetScreenY(hintMove.SourceCoord) + half);
-        Vector2 to = new Vector2(UIHelper.GetScreenX(hintMove.TargetCoord) + half, UIHelper.GetScreenY(hintMove.TargetCoord) + half);
-
-        Vector2 direction = Vector2.Normalize(to - from);
-        Vector2 side = new Vector2(-direction.Y, direction.X);
-        const float headLength = 40, headWidth = 30, thickness = 16;
-
         Color color = Theme.ButtonHoverColor;
         color.A = 190;
-
-        Vector2 headBase = to - direction * headLength;
-        Raylib.DrawLineEx(from, headBase, thickness, color);
-
-        // Raylib only fills triangles given counter-clockwise, so both windings are drawn and one is skipped
-        Vector2 left = headBase + side * headWidth, right = headBase - side * headWidth;
-        Raylib.DrawTriangle(to, left, right, color);
-        Raylib.DrawTriangle(to, right, left, color);
+        UIHelper.DrawArrow(hintMove.Source, hintMove.Target, color);
     }
 
     // The human gives up; in a game against the bot that is always the human's side
@@ -366,6 +356,7 @@ class Game {
         evalBar = new EvalBar();
         moveHistory = new MoveHistory();
         evalGraph = new EvalGraph();
+        annotations = new Annotations();
         Bot.LastSearch = null;
 
         openingBook = new OpeningBook();
@@ -392,6 +383,7 @@ class Game {
         board.Render();
         coord.Render();
         position.Render();
+        annotations.Render();
         RenderHint();
         player.Render(chessBoard);
         gameStatus.Render();
