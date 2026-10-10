@@ -69,4 +69,39 @@ class FenUtility {
 
         board.MoveCount = int.Parse(parts[5]);
     }
+
+    // Writes the position as standard FEN (rank 8 first), the way other chess programs and sites read it
+    public static string ToFen(Board board) {
+        var fen = new System.Text.StringBuilder();
+
+        for (int row = 7; row >= 0; row--) {
+            int empty = 0;
+            for (int column = 0; column < 8; column++) {
+                Piece piece = board.Square[row * 8 + column];
+                if (piece.IsNone) {
+                    empty++;
+                    continue;
+                }
+
+                if (empty > 0) fen.Append(empty);
+                empty = 0;
+
+                char letter = PieceByChar.First(pair => pair.Value == piece.Type).Key;
+                fen.Append(piece.IsWhite ? char.ToUpper(letter) : letter);
+            }
+            if (empty > 0) fen.Append(empty);
+            if (row > 0) fen.Append('/');
+        }
+
+        string castling = "";
+        if ((board.CastlingRights & 0b1000) != 0) castling += "K";
+        if ((board.CastlingRights & 0b0100) != 0) castling += "Q";
+        if ((board.CastlingRights & 0b0010) != 0) castling += "k";
+        if ((board.CastlingRights & 0b0001) != 0) castling += "q";
+
+        string enPassant = board.EnPassantSquare == -1 ? "-" : new Coord(board.EnPassantSquare).ToString();
+
+        fen.Append($" {(board.IsWhiteTurn ? "w" : "b")} {(castling == "" ? "-" : castling)} {enPassant} {board.HalfMoveClock} {board.MoveCount}");
+        return fen.ToString();
+    }
 }
