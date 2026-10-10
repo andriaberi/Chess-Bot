@@ -15,6 +15,14 @@ class UIHelper {
         return Settings.ScreenHeight / 2 - (Settings.FromWhitesView ? (rowIndex - 3) : (4 - rowIndex)) * Settings.SquareSideLength;
     }
 
+    // The column left of the board holds the bot panel at the top, the game result in the middle and the menu at the bottom
+    public const int LeftColumnWidth = 320;
+    public static int LeftColumnX => (Settings.BoardMarginLeft - Settings.BorderSize) / 2 - LeftColumnWidth / 2;
+
+    // Top and bottom edges of the board's frame
+    public static int BoardTop => Settings.ScreenHeight / 2 - 4 * Settings.SquareSideLength - Settings.BorderSize;
+    public static int BoardBottom => Settings.ScreenHeight / 2 + 4 * Settings.SquareSideLength + Settings.BorderSize;
+
     public static int GetScreenX(Coord coord) => GetScreenX(coord.ColumnIndex);
     public static int GetScreenY(Coord coord) => GetScreenY(coord.RowIndex);
 
