@@ -399,3 +399,6 @@ FodyWeavers.xsd
 
 # Packaged builds from `make publish`
 dist/
+
+# Games saved from the in-game menu
+Games/

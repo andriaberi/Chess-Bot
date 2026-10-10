@@ -9,19 +9,18 @@ class Timer {
     private bool isRunning = true;
     private DateTime prevUpdate = DateTime.Now;
 
-    private readonly bool isOnTop;
+    private readonly bool isWhite;
     private readonly Font font = UIHelper.LoadFont(52);
 
     private const int FontSize = 52;
     private const int RectWidth = 200;
     private const int RectHeight = 48;
-    private const int Offset = 10;
 
     public double Time => time;
 
-    public Timer(double initialTime, bool isOnTop) {
+    public Timer(double initialTime, bool isWhite) {
         time = initialTime;
-        this.isOnTop = isOnTop;
+        this.isWhite = isWhite;
     }
 
     public void Start() => isRunning = true;
@@ -44,17 +43,15 @@ class Timer {
     }
 
     public void Render() {
-        bool isWhite = isOnTop != Settings.FromWhitesView;
+        // The side whose pieces start at the top of the board has its clock above it
+        bool isOnTop = isWhite != Settings.FromWhitesView;
         bool active = isRunning;
 
         Color rectColor = GetColor(active, isWhite, true);
         Color textColor = GetColor(active, isWhite, false);
 
         int x = Settings.BoardMarginLeft + 8 * Settings.SquareSideLength - RectWidth;
-        int space = Settings.ScreenHeight / 2 - (Settings.SquareSideLength * 4 + Settings.BorderSize);
-        int y = isOnTop
-            ? space - Offset - FontSize + 6
-            : space + Settings.SquareSideLength * 8 + Settings.BorderSize * 2 + Offset;
+        int y = (isOnTop ? UIHelper.TopBarCenterY : UIHelper.BottomBarCenterY) - RectHeight / 2;
 
         Raylib.DrawRectangle(x, y, RectWidth, RectHeight, rectColor);
 
@@ -66,6 +63,8 @@ class Timer {
     }
 
     private static string FormatTime(double t) {
+        if (double.IsPositiveInfinity(t)) return "--:--";
+
         int d = (int) (t * 10);
         return d < 600
             ? $"{d / 10:D2}.{d % 10}"

@@ -34,7 +34,7 @@ class EvalBar {
     }
 
     // Maps the eval onto winning chances, so the bar moves a lot near equality and little once the game is decided
-    private static float WhiteShare(SearchInfo info) {
+    public static float WhiteShare(SearchInfo info) {
         if (info.MateIn != 0) return info.MateIn > 0 ? 1f : 0f;
 
         double winningChances = 2 / (1 + Math.Exp(-0.00368208 * info.Eval)) - 1;

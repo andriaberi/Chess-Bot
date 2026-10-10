@@ -10,11 +10,15 @@ class Button {
     public bool IsHovered;
     public float HoverLerp;
 
-    private static int fontSize = 42;
-    private static Font font = UIHelper.LoadFont(fontSize);
+    // Fonts are shared between buttons of the same text size
+    private static readonly Dictionary<int, Font> fonts = new();
+    private readonly int fontSize;
+    private readonly Font font;
 
-    public Button(string text, int x, int y, int width, int height) {
+    public Button(string text, int x, int y, int width, int height, int fontSize = 42) {
         Text = text;
+        this.fontSize = fontSize;
+        if (!fonts.TryGetValue(fontSize, out font)) fonts[fontSize] = font = UIHelper.LoadFont(fontSize);
         IsHovered = false;
         HoverLerp = 0f;
         Bounds = new Rectangle(x, y, width, height);
@@ -23,6 +27,18 @@ class Button {
         TextPosition = new Vector2(
             x + width / 2 - textSize.X / 2,
             y + height / 2 - textSize.Y / 2
+        );
+    }
+
+    // Changes the label, keeping it centered
+    public void SetText(string text) {
+        if (text == Text) return;
+        Text = text;
+
+        Vector2 textSize = Raylib.MeasureTextEx(font, text, fontSize, 0);
+        TextPosition = new Vector2(
+            Bounds.X + Bounds.Width / 2 - textSize.X / 2,
+            Bounds.Y + Bounds.Height / 2 - textSize.Y / 2
         );
     }
 
