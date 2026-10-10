@@ -12,6 +12,8 @@ class Board {
 
     public List<ulong> PastZobristKeys = new List<ulong>();
     public List<Move> MovesMade = new List<Move>();
+    public List<string> MovesNotation = new List<string>(); // Algebraic notation of MovesMade, for the move history
+    public int FirstPly; // Plies played before this position, from its move number and side to move (e.g. 1 when black moves first)
 
     // Bitboard for pieces, indexed by piece type
     public Bitboard[] Type = new Bitboard[7];
@@ -29,6 +31,7 @@ class Board {
     public Board(string fen) {
         FenUtility.LoadFen(fen, this);
         MovesMade = new List<Move>(); // Clearing the list of moves after resetting the game
+        FirstPly = (MoveCount - 1) * 2 + (IsWhiteTurn ? 0 : 1);
 
         ZobristKey = ZobristHashing.CalculateZobristKey(this);
         PastZobristKeys = new List<ulong> { ZobristKey }; // Initialize with the current key
@@ -37,6 +40,9 @@ class Board {
     public void SwitchTurn() => IsWhiteTurn = !IsWhiteTurn;
 
     public void MakeMove(Move move, bool record = false) {
+        // Notation depends on the position before the move (disambiguation) and after it (check)
+        if (record) MovesNotation.Add(Notation.ToSan(this, move));
+
         // Update the Zobrist key incrementally: XOR out the pieces that leave their squares, XOR in the ones that arrive
         // The castling and en passant state is XOR-ed out here and the new state back in after the move
         ulong key = ZobristKey ^ ZobristHashing.BlackToMoveKey ^ ZobristHashing.StateKey(this);
