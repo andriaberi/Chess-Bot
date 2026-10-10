@@ -13,7 +13,6 @@ static class TestHelpers {
 
     // Long algebraic notation, e.g. "e2e4" or "e7e8q"
     public static string Uci(Move move) {
-        // Coord names squares correctly (BoardHelper.SquareNameFromIndex does not, see KnownBugTests)
         string text = move.SourceCoord.ToString() + move.TargetCoord.ToString();
         return move.PromotingTo switch {
             Piece.Queen => text + "q",
@@ -49,7 +48,7 @@ static class TestHelpers {
         return count;
     }
 
-    // Everything make/unmake is expected to restore (the halfmove clock is covered by KnownBugTests)
+    // Everything make/unmake is expected to restore
     public static string Snapshot(Board board) => string.Join(" | ",
         string.Concat(board.Square.Select(piece => piece.ToString())),
         string.Join(",", board.Type.Select(bitboard => bitboard.Value)),

@@ -84,6 +84,15 @@ public class BoardTests {
         Assert.Equal(0, board.HalfMoveClock);
     }
 
+    [Theory]
+    [InlineData("a1")]
+    [InlineData("e2")]
+    [InlineData("h8")]
+    public void SquareNameFromIndex_MatchesSquareIndexFromName(string name) {
+        Assert.Equal(name, BoardHelper.SquareNameFromIndex(Square(name)));
+        Assert.Equal(Square(name), BoardHelper.IndexFromCoord(BoardHelper.CoordFromIndex(Square(name))));
+    }
+
     [Fact]
     public void ZobristKey_IsTheSameForTransposedMoveOrders() {
         Board first = new Board("");
