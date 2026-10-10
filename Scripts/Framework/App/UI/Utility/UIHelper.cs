@@ -3,6 +3,7 @@ namespace Chess.UI;
 using Chess.API;
 using Chess.Utility;
 using Raylib_cs;
+using System.Numerics;
 
 class UIHelper {
     // Finding square's x position on screen by its column index
@@ -29,6 +30,11 @@ class UIHelper {
     public static Font LoadFont(int fontSize) {
         string fontPath = "Resources/Fonts/Nunito-Medium.ttf";
         return Raylib.LoadFontEx(fontPath, fontSize, null, 0);
+    }
+
+    public static void DrawTextCentered(Font font, string text, float centerX, float y, int fontSize, Color color) {
+        Vector2 size = Raylib.MeasureTextEx(font, text, fontSize, 1);
+        Raylib.DrawTextEx(font, text, new Vector2(centerX - size.X / 2, y), fontSize, 1, color);
     }
 
     public static string GetPieceName(API.Piece piece) {
