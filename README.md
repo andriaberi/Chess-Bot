@@ -1,6 +1,7 @@
 # ♟️ Chess Bot
 
-Chess Bot is a C#-based chess engine capable of playing chess against a human or another engine. It features move generation, evaluation, and an iterative deepening alpha-beta search with transposition tables and time management for real-time play.
+Chess Bot is a C#-based chess engine capable of playing chess against a human or another engine. It features move generation, evaluation, and an iterative deepening alpha-beta search with transposition tables and time management for real-time play,
+a desktop app to play it in, and a UCI mode for chess GUIs and engine matches.
 
 ![alt text](<Resources/Media/Demo.png>)
 
@@ -10,7 +11,7 @@ Chess Bot is a C#-based chess engine capable of playing chess against a human or
 - [Features](#features)
 - [Architecture](#architecture)
 - [Setup Instructions](#setup-instructions)
-- [Testing Guide](#testing-guide)
+- [Playing the Game](#playing-the-game)
 - [UCI and Comparing Versions](#uci-and-comparing-versions)
 - [Modifying the Codebase](#modifying-the-codebase)
 - [License](#license)
@@ -24,13 +25,27 @@ It’s fast, accurate, and easy to expand.
 
 # Features
 
-* Fully legal move generation (castling, en passant, promotion)
+**Engine**
+
+* Fully legal move generation (castling, en passant, promotion), verified with perft tests
 * Bitboard architecture for high performance
 * Magic bitboards for sliding pieces (rooks, bishops, queens)
-* Iterative deepening alpha-beta with move ordering
+* Iterative deepening alpha-beta with quiescence search and MVV-LVA move ordering
 * Transposition tables to reuse prior calculations
-* Parallel time management for smooth gameplay
-* Clean, modular codebase—UI-agnostic
+* Opening book for games from the standard start position
+* Time management based on the clock, increment and game phase
+* Three difficulty levels: Easy, Medium and Hard
+* UCI mode, so chess GUIs and tournament runners can use it
+
+**App**
+
+* Play as White or Black against the bot, or watch it play itself
+* Bot panel with its best move, evaluation, depth, nodes, speed and think time
+* Evaluation bar, evaluation graph over the game, and move history in algebraic notation
+* Hint and resign buttons, arrows and circles for annotations, and a promotion piece picker
+* Clocks (3, 5 or 10 minutes, or off), sounds, and a result card with the reason the game ended
+* Save the game as PGN, copy the position as FEN, flip the board
+* Draw rules: stalemate, threefold repetition, the 50-move rule and insufficient material
 
 # Architecture
 
@@ -43,6 +58,10 @@ It’s fast, accurate, and easy to expand.
 | `Evaluation`         | Performs static position evaluation with piece-square tables     |
 | `TranspositionTable` | Caches positions for faster repeated state lookups               |
 | `OpeningBook`        | Database of grandmaster openings to guide early-game decisions   |
+| `Arbiter`            | Decides when a game is over and why (mate, draws, time)          |
+| `Game`               | Runs a game in the app: players, clocks, menu actions, rendering |
+| `Pgn`                | Writes games as PGN                                              |
+| `Uci`                | Speaks the UCI protocol on standard input and output             |
 | `UI`                 | Visualizes the board and user interface (specific to this app)   |
 
 
@@ -89,15 +108,22 @@ Run `make` on its own to see every command:
 
 Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 
-# Testing Guide
+# Playing the Game
 
 * After running the program, a window will open with the board set up—human plays as White by default.
 * Drag and drop a piece, or click it and then click its square, to make your move.
 * Right-drag between squares to draw an arrow, or right-click a square to circle it; a left click clears them.
-* The bot will respond automatically, typically within 2 seconds. Its search, best move and evaluation show on the left.
+* The bot will respond automatically, typically within a few seconds. Its best move, evaluation, depth, nodes, speed
+  and think time show on the left, with a graph of the evaluation over the game below them.
+* The bar beside the board shows who is better, and the move history on the right lists every move played.
 * **Hint** shows the bot's best move for you as an arrow; **Resign** ends the game after a second click.
 * The **Menu** starts a new game (Play White, Play Black, AI vs AI) and sets the bot's difficulty and the clock.
   It can also save the game as PGN, copy the position as FEN, and flip the board.
+  * **Easy** searches shallowly and picks among nearly equal moves at random, **Medium** searches a little deeper,
+    and **Hard** searches as deep as its think time allows.
+  * The clock is 3, 5 or 10 minutes, or off, and applies from the next game.
+* When the game ends, a card shows the result and why (checkmate, stalemate, repetition, 50-move rule,
+  insufficient material, time or resignation).
 * To verify the engine, run the unit tests: `make test`
   * Tests live in the `Tests` folder and cover move generation (perft), the board, game rules, and the bot.
   * Every push and pull request runs the full suite on GitHub Actions.
