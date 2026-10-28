@@ -20,7 +20,7 @@
     <InternalsVisibleTo Include="Tests" />
   </ItemGroup>
 
-  <!-- Version from the nearest v* git tag: "2026.1027.1" on a tagged commit, "2026.1027.1+3" three commits later, "-dirty" with uncommitted
+  <!-- Version from the nearest v* git tag: "1.2026.1027.1" on a tagged commit, "1.2026.1027.1+3" three commits later, "-dirty" with uncommitted
        changes, "0.0+N" before the first tag. The UCI mode reports it, so match results say which versions played -->
   <PropertyGroup>
     <Version>0.0</Version>
@@ -38,7 +38,7 @@
       <Output TaskParameter="ConsoleOutput" PropertyName="GitCommitCount" />
     </Exec>
 
-    <!-- git describe gives e.g. v2026.1027.1-3-gabc1234-dirty -->
+    <!-- git describe gives e.g. v1.2026.1027.1-3-gabc1234-dirty -->
     <PropertyGroup Condition="'$(GitDescribeExitCode)' == '0'">
       <GitTagVersion>$([System.Text.RegularExpressions.Regex]::Match($(GitDescribe), '^v([0-9.]+)-').Groups[1].Value)</GitTagVersion>
       <GitCommitsSinceTag>$([System.Text.RegularExpressions.Regex]::Match($(GitDescribe), '-([0-9]+)-g').Groups[1].Value)</GitCommitsSinceTag>
