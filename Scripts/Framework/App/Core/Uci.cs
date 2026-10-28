@@ -26,7 +26,7 @@ class Uci {
         this.output = output;
     }
 
-    // Name and version, e.g. "Chess-Bot 1.2", from the version the build was stamped with
+    // Name and version, e.g. "Chess-Bot 2026.1027.1", from the version the build was stamped with
     public static string EngineName {
         get {
             string? version = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;

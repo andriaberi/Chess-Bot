@@ -6,10 +6,10 @@ on:
   pull_request:
   workflow_dispatch:
 
-# Cancel an older run when new commits are pushed to the same branch or pull request
+# Cancel an older pull request run when new commits are pushed to it; runs on main finish, so each is released
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-and-test:
@@ -25,3 +25,70 @@ jobs:
 
       - name: Check
         run: make check
+
+  # Each push to main that passes the checks is released, numbered by its date:
+  # 2026.1027.1, then 2026.1027.2 the same day, then 2026.1028.1 (no leading zeros,
+  # so 5 January is 2027.105.1).
+  release:
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      TZ: America/New_York
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Number the release
+        id: number
+        run: |
+          if [ -n "$(git tag --points-at HEAD --list 'v*')" ]; then
+            echo "This commit is released already."
+            exit 0
+          fi
+          year=$(date +%Y)
+          day=$((10#$(date +%m%d)))
+          last=$(git tag --list "v$year.$day.*" | sed "s/^v$year\.$day\.//" | sort -n | tail -1)
+          echo "version=$year.$day.$(( ${last:-0} + 1 ))" >> "$GITHUB_OUTPUT"
+          echo "previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null)" >> "$GITHUB_OUTPUT"
+
+      # The build stamps its version from the nearest tag, so tag first; the release pushes the tag
+      - name: Package
+        if: steps.number.outputs.version
+        env:
+          VERSION: ${{ steps.number.outputs.version }}
+        run: |
+          git tag "v$VERSION"
+          for rid in linux-x64 win-x64 osx-x64 osx-arm64; do
+            make publish RID=$rid
+            if [ "$rid" = win-x64 ]; then
+              (cd dist && zip -qr "chess-bot-$VERSION-$rid.zip" "chess-bot-$rid")
+            else
+              tar -czf "dist/chess-bot-$VERSION-$rid.tar.gz" -C dist "chess-bot-$rid"
+            fi
+          done
+
+      - name: Release
+        if: steps.number.outputs.version
+        env:
+          VERSION: ${{ steps.number.outputs.version }}
+          PREVIOUS: ${{ steps.number.outputs.previous }}
+        run: |
+          if [ -n "$PREVIOUS" ]; then
+            git log --format='- %s' "$PREVIOUS..HEAD" > notes.md
+          else
+            echo "- The first release." > notes.md
+          fi
+          gh release create "v$VERSION" dist/*.tar.gz dist/*.zip --target "$GITHUB_SHA" --title "$VERSION" --notes-file notes.md
