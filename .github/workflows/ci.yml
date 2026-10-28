@@ -27,8 +27,8 @@ jobs:
         run: make check
 
   # Each push to main that passes the checks is released, numbered by its date:
-  # 2026.1027.1, then 2026.1027.2 the same day, then 2026.1028.1 (no leading zeros,
-  # so 5 January is 2027.105.1).
+  # 1.2026.1027.1, then 1.2026.1027.2 the same day, then 1.2026.1028.1 (no leading zeros,
+  # so 5 January is 1.2027.105.1).
   release:
     needs: build-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -60,8 +60,8 @@ jobs:
           fi
           year=$(date +%Y)
           day=$((10#$(date +%m%d)))
-          last=$(git tag --list "v$year.$day.*" | sed "s/^v$year\.$day\.//" | sort -n | tail -1)
-          echo "version=$year.$day.$(( ${last:-0} + 1 ))" >> "$GITHUB_OUTPUT"
+          last=$(git tag --list "v1.$year.$day.*" | sed "s/^v1\.$year\.$day\.//" | sort -n | tail -1)
+          echo "version=1.$year.$day.$(( ${last:-0} + 1 ))" >> "$GITHUB_OUTPUT"
           echo "previous=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null)" >> "$GITHUB_OUTPUT"
 
       # The build stamps its version from the nearest tag, so tag first; the release pushes the tag

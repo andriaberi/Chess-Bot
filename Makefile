@@ -9,7 +9,7 @@ export CONFIG
 publish:
 	@bash cli.sh publish $(RID)
 
-# `make match OLD=v2026.1027.1` plays the working tree against that release; NEW=<version>, GAMES and TC are optional.
+# `make match OLD=v1.2026.1027.1` plays the working tree against that release; NEW=<version>, GAMES and TC are optional.
 match:
 	@GAMES=$(GAMES) TC=$(TC) bash cli.sh match $(OLD) $(NEW)
 

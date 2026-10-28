@@ -163,7 +163,7 @@ ${B}Engine${R}
   ${A}match${R}     Play two versions against each other
 
 ${D}Without RID, publish opens a picker.${R}
-${D}match OLD=v2026.1027.1 plays your working tree against that release; NEW=<version> picks another side,
+${D}match OLD=v1.2026.1027.1 plays your working tree against that release; NEW=<version> picks another side,
 GAMES=200 and TC=10+0.1 set the length. Needs fastchess or cutechess-cli on PATH.${R}
 EOF
 }
@@ -326,7 +326,7 @@ cmd_match() {
 	(( concurrency < 1 )) && concurrency=1
 
 	if [[ -z $old ]]; then
-		fail "Name the version to play against, e.g. make match OLD=v2026.1027.1"; exit 1
+		fail "Name the version to play against, e.g. make match OLD=v1.2026.1027.1"; exit 1
 	fi
 	if command -v fastchess >/dev/null; then runner=fastchess
 	elif command -v cutechess-cli >/dev/null; then runner=cutechess-cli
@@ -343,7 +343,7 @@ cmd_match() {
 			dotnet build "$PROJECT" -c Release -nologo -o "$MATCH_DIR/new" || exit 1
 	fi
 
-	# Names come from the engines themselves (e.g. "Chess-Bot 2026.1027.1+3"), marked old and new in case they match
+	# Names come from the engines themselves (e.g. "Chess-Bot 1.2026.1027.1+3"), marked old and new in case they match
 	local old_name new_name
 	old_name="$(match_engine_name "$MATCH_DIR/old") (old)"
 	new_name="$(match_engine_name "$MATCH_DIR/new") (new)"
@@ -425,7 +425,7 @@ match_build() {
 	return "$status"
 }
 
-# match_engine_name DIR — the name the engine in DIR gives over UCI, e.g. "Chess-Bot 2026.1027.1".
+# match_engine_name DIR — the name the engine in DIR gives over UCI, e.g. "Chess-Bot 1.2026.1027.1".
 match_engine_name() {
 	printf 'uci\nquit\n' | "$1/Chess-Bot" --uci | sed -n 's/^id name //p'
 }
