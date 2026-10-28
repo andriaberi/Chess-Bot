@@ -10,6 +10,7 @@ a desktop app to play it in, and a UCI mode for chess GUIs and engine matches.
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
+- [Releases](#releases)
 - [Setup Instructions](#setup-instructions)
 - [Playing the Game](#playing-the-game)
 - [UCI and Comparing Versions](#uci-and-comparing-versions)
@@ -65,6 +66,15 @@ It’s fast, accurate, and easy to expand.
 | `UI`                 | Visualizes the board and user interface (specific to this app)   |
 
 
+# Releases
+
+Every change to `main` that passes the checks is released on its own, numbered by the
+day: `2026.1027.1` is the first release of 27 October 2026, `2026.1027.2` the second,
+and 5 January 2027 starts at `2027.105.1`. Each is a tag and a
+[GitHub release](https://github.com/andriaberi/Chess-Bot/releases) with its changes listed and
+self-contained builds for Linux, Windows and macOS (Intel and Apple silicon), so no .NET install is needed.
+Unpack one and run `Chess-Bot` (`Chess-Bot.exe` on Windows) from inside its folder, so it finds `Resources`.
+
 # Setup Instructions
 
 1. **Make Sure .NET SDK is Installed**  
@@ -104,7 +114,7 @@ Run `make` on its own to see every command:
 | `make perft` | Run the perft tests and show nodes, time and speed per position and depth |
 | `make check` | Build everything and test (what CI runs) |
 | `make format` | Fix whitespace to match `.editorconfig` |
-| `make match` | Play two versions of the bot against each other (`OLD=v1.0`, optional `NEW=`, `GAMES=`, `TC=`) |
+| `make match` | Play two versions of the bot against each other (`OLD=v2026.1027.1`, optional `NEW=`, `GAMES=`, `TC=`) |
 
 Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
 
@@ -141,13 +151,13 @@ It supports `uci`, `isready`, `setoption` (`Difficulty`, `OwnBook`), `ucinewgame
 (`wtime`/`btime`/`winc`/`binc`, `movetime`, `depth`, `infinite`), `stop` and `quit`, and reports
 `info depth … score … nodes … nps … time … pv …` as it searches.
 
-Versions are git tags (`v1.0`, `v1.1`, …), and the engine reports its version as `Chess-Bot 1.1`
-(`1.1+3` three commits later). To see whether a change made the bot stronger, play it against an earlier version:
+Versions are git tags, and the engine reports its version as `Chess-Bot 2026.1027.1`
+(`2026.1027.1+3` three commits later). To see whether a change made the bot stronger, play it against an earlier version:
 
 ```sh
-make match OLD=v1.0              # your working tree against v1.0
-make match OLD=v1.0 NEW=v1.1     # two tagged versions
-make match OLD=v1.0 GAMES=400 TC=5+0.05
+make match OLD=v2026.1027.1                      # your working tree against v2026.1027.1
+make match OLD=v2026.1027.1 NEW=v2026.1028.1     # two releases
+make match OLD=v2026.1027.1 GAMES=400 TC=5+0.05
 ```
 
 This needs [fastchess](https://github.com/Disservin/fastchess) or
