@@ -59,8 +59,8 @@ class Game {
 
         Settings.FromWhitesView = fromWhitesView;
 
-        whiteTimer = new Timer(Settings.TimeLimit, true);
-        blackTimer = new Timer(Settings.TimeLimit, false);
+        whiteTimer = new Timer(Settings.TimeLimit, Settings.Increment, true);
+        blackTimer = new Timer(Settings.TimeLimit, Settings.Increment, false);
 
         chessBoard = new ChessEngine.Board(fen);
 
@@ -218,7 +218,7 @@ class Game {
             // The book follows games from the standard start, so it can't be used for a game set up from another position
             bool fromStart = chessBoard.StartFen == ChessEngine.FenUtility.StandardStartFen;
             Move move = fromStart ? openingBook.GetMove(chessBoard.MovesMade) : Move.NullMove;
-            if (move.IsNull) move = currentPlayer.Search(chessBoard, chessBoard.IsWhiteTurn ? whiteTimer.Time : blackTimer.Time, token);
+            if (move.IsNull) move = currentPlayer.Search(chessBoard, chessBoard.IsWhiteTurn ? whiteTimer.Time : blackTimer.Time, whiteTimer.Increment, token);
             else Bot.LastSearch = new SearchInfo(move, 0, 0, 0, 0, 0, 0, DateTime.Now, FromBook: true);
 
             // A cancelled search returns whatever it had so far, which must not be played
@@ -253,10 +253,10 @@ class Game {
 
         if (chessBoard.IsWhiteTurn) {
             whiteTimer.Start();
-            blackTimer.Stop();
+            blackTimer.EndTurn();
         } else {
             blackTimer.Start();
-            whiteTimer.Stop();
+            whiteTimer.EndTurn();
         }
 
         statusCheck = true;
@@ -339,8 +339,8 @@ class Game {
         menu.Close();
 
         // Reset game state
-        whiteTimer = new Timer(Settings.TimeLimit, true);
-        blackTimer = new Timer(Settings.TimeLimit, false);
+        whiteTimer = new Timer(Settings.TimeLimit, Settings.Increment, true);
+        blackTimer = new Timer(Settings.TimeLimit, Settings.Increment, false);
 
         chessBoard = new ChessEngine.Board("");
 

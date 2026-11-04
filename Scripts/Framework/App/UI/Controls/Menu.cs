@@ -10,7 +10,7 @@ enum GameAction { None, PlayAsWhite, PlayAsBlack, AiVsAi, SaveGame, CopyFen, Fli
 
 class Menu {
     // A "Menu" button at the top of the left column, opening a popup over the board with the game controls
-    // Difficulty and clock are applied here; everything else is returned to the game as an action
+    // Difficulty, clock and increment are applied here; everything else is returned to the game as an action
     private const int ButtonHeight = 55;
     private const int PanelWidth = 640;
     private const int Padding = 28;
@@ -40,6 +40,10 @@ class Menu {
 
     private static readonly (string Label, double Seconds)[] clocks = {
         ("3 min", 3 * 60), ("5 min", 5 * 60), ("10 min", 10 * 60), ("Off", double.PositiveInfinity)
+    };
+
+    private static readonly (string Label, double Seconds)[] increments = {
+        ("None", 0), ("+1 s", 1), ("+2 s", 2), ("+5 s", 5)
     };
 
     public Menu() {
@@ -73,6 +77,11 @@ class Menu {
             clock.Label,
             (Func<bool>) (() => Settings.TimeLimit == clock.Seconds),
             (Func<GameAction>) (() => SetClock(clock.Seconds)))).ToArray());
+
+        Section("Increment per move (from the next game)", increments.Select(increment => (
+            increment.Label,
+            (Func<bool>) (() => Settings.Increment == increment.Seconds),
+            (Func<GameAction>) (() => { Settings.Increment = increment.Seconds; return GameAction.None; }))).ToArray());
 
         Section("Game",
             ("Save game", never, () => GameAction.SaveGame),
@@ -163,7 +172,7 @@ class Menu {
             Raylib.DrawTextEx(captionFont, text, new Vector2(panel.X + Padding, y), CaptionFontSize, 1, Theme.ButtonTextColor);
         }
 
-        // The current difficulty and clock stay marked like a hovered button
+        // The current difficulty, clock and increment stay marked like a hovered button
         foreach (Entry entry in entries) {
             bool selected = entry.IsSelected();
             entry.Button.Render(

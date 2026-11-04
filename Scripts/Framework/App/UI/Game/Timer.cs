@@ -17,14 +17,23 @@ class Timer {
     private const int RectHeight = 48;
 
     public double Time => time;
+    public double Increment { get; }
 
-    public Timer(double initialTime, bool isWhite) {
+    public Timer(double initialTime, double increment, bool isWhite) {
         time = initialTime;
+        Increment = increment;
         this.isWhite = isWhite;
     }
 
     public void Start() => isRunning = true;
     public void Stop() => isRunning = false;
+
+    // Its side has moved: the clock stops and gains the increment, unless it has already run out
+    public void EndTurn() {
+        Update();
+        Stop();
+        if (time > 0) time += Increment;
+    }
 
     public void Update() {
         if (!isRunning) {

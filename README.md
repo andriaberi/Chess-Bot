@@ -44,7 +44,7 @@ It’s fast, accurate, and easy to expand.
 * Bot panel with its best move, evaluation, depth, nodes, speed and think time
 * Evaluation bar, evaluation graph over the game, and move history in algebraic notation
 * Hint and resign buttons, arrows and circles for annotations, and a promotion piece picker
-* Clocks (3, 5 or 10 minutes, or off), sounds, and a result card with the reason the game ended
+* Clocks (3, 5 or 10 minutes, or off) with an optional increment of 1, 2 or 5 seconds a move, sounds, and a result card with the reason the game ended
 * Save the game as PGN, copy the position as FEN, flip the board
 * Draw rules: stalemate, threefold repetition, the 50-move rule and insufficient material
 
@@ -128,11 +128,11 @@ Without `make`, use `dotnet run -c Release` and `dotnet test -c Release`.
   and think time show on the left, with a graph of the evaluation over the game below them.
 * The bar beside the board shows who is better, and the move history on the right lists every move played.
 * **Hint** shows the bot's best move for you as an arrow; **Resign** ends the game after a second click.
-* The **Menu** starts a new game (Play White, Play Black, AI vs AI) and sets the bot's difficulty and the clock.
+* The **Menu** starts a new game (Play White, Play Black, AI vs AI) and sets the bot's difficulty, the clock and its increment.
   It can also save the game as PGN, copy the position as FEN, and flip the board.
   * **Easy** searches shallowly and picks among nearly equal moves at random, **Medium** searches a little deeper,
     and **Hard** searches as deep as its think time allows.
-  * The clock is 3, 5 or 10 minutes, or off, and applies from the next game.
+  * The clock is 3, 5 or 10 minutes, or off, plus an increment of 0, 1, 2 or 5 seconds after each move; both apply from the next game.
 * When the game ends, a card shows the result and why (checkmate, stalemate, repetition, 50-move rule,
   insufficient material, time or resignation).
 * To verify the engine, run the unit tests: `make test`
