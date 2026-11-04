@@ -16,4 +16,5 @@ class Settings {
 
     // Timer
     public static double TimeLimit = 10 * 60; // 10 minutes in seconds, infinity for no clock
+    public static double Increment = 0;       // Seconds added to a clock after each of its side's moves
 }

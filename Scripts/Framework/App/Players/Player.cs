@@ -22,5 +22,5 @@ abstract class Player {
         return $"{PlayerType} | {Color}";
     }
 
-    public abstract Move Search(Board board, double timeRemaining, CancellationToken cancel);
+    public abstract Move Search(Board board, double timeRemaining, double increment, CancellationToken cancel);
 }

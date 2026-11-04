@@ -163,10 +163,10 @@ class Position {
     private static void SwitchTimers(ChessEngine.Board board, ref Timer whiteTimerUI, ref Timer blackTimerUI) {
         if (board.IsWhiteTurn) {
             whiteTimerUI.Start();
-            blackTimerUI.Stop();
+            blackTimerUI.EndTurn();
         } else {
             blackTimerUI.Start();
-            whiteTimerUI.Stop();
+            whiteTimerUI.EndTurn();
         }
     }
 
