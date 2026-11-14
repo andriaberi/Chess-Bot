@@ -16,7 +16,6 @@ a desktop app to play it in, and a UCI mode for chess GUIs and engine matches.
 - [UCI and Comparing Versions](#uci-and-comparing-versions)
 - [Modifying the Codebase](#modifying-the-codebase)
 - [License](#license)
-- [Contact Information](#contact-information)
 
 # Overview
 
@@ -177,10 +176,4 @@ the new version is stronger, weaker or not clearly different yet, and by about h
 # License
 
 This project is licensed under the MIT License. See `LICENSE`.
-
-# Contact Information
-
-| Name           | Phone Number      | Email               | LinkedIn                                    |
-|----------------|-------------------|---------------------|---------------------------------------------|
-| Andria Beridze | +1 (267) 632-6754 | andria24b@gmail.com | [linkedin.com/in/andriaberidze](https://www.linkedin.com/in/andriaberidze/) |
 
